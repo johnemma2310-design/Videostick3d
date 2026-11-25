@@ -89,6 +89,14 @@ STICK 3D/
 9. Carpeta con el nombre del video + `PUBLICAR.txt` (títulos calificados con vidIQ `score_title`, descripción,
    hashtags y tags).
 
+## Empezar en otra PC (desde este repo)
+1. Instala Node, Python 3 con numpy, ffmpeg y edge-tts (`pip install edge-tts numpy`).
+2. `cd shorts-sticky && npm install`.
+3. Convierte las voces: `ffmpeg -i voz/<v>/voz.mp3 -ar 48000 -ac 1 public/voz_<v>.wav` (con v = apagon, luna, rotacion, outro).
+4. Regenera el cierre: render de la composición `Outro` → `python -I audio/mezcla.py outro public/voz_outro.wav out/outro_mezcla.wav`
+   → júntalo con ffmpeg (`-map 0:v:0 -map 1:a:0`) → `python -I subtitulos.py voz/outro/palabras.json out/outro_sin_subs.mp4 out/outro_final.mp4`.
+5. La skill original de LuisPa (`SKILL.md` y las referencias de estilo) **no viene aquí**: clónala de su repo si la necesitas.
+
 ## Herramientas que se usaron (Windows)
 Node 24, npm, Python 3.14 con numpy, ffmpeg 9, edge-tts 7.3.1, Remotion 4.0.522, three 0.186.
 Para investigar, el conector de vidIQ: `outliers` (qué shorts están pegando), `keyword_research` y `score_title`.
