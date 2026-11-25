@@ -15,3 +15,6 @@ ejemplos/
 herramientas/
 realista/
 referencias/
+
+# Permisos locales de Claude Code (no subir)
+.claude/settings.local.json
