@@ -16,6 +16,17 @@ Este repositorio hace los shorts animados del canal **Curiosidades con Sticky**.
 - La historia lleva `voz:` (las palabras de `palabras.json`) para que Sticky mueva la boca.
 - No subas `.mp4`, `.wav`, `node_modules` ni `out/`. Al terminar, corre `SINCRONIZAR.bat` o haz `git pull --rebase`, commit y push.
 
+## Reparto automático de modelos (Claude Code)
+En `.claude/agents/` hay tres subagentes. El agente principal reparte las tareas entre ellos solo, sin cambiar el modelo a mano:
+
+| Subagente | Modelo | Para qué |
+|---|---|---|
+| `renderizador` | Haiku | Renders, subtítulos, cierre, copiar los videos y revisar duración y volumen |
+| `guionista` | Sonnet | Guion, voz, `PUBLICAR.txt` y videos nuevos armados copiando la estructura de uno existente |
+| `director` | Opus | Escenas difíciles, personajes, animaciones y cambios al motor |
+
+Recomendado: deja la sesión principal en **Sonnet** como orquestador y que el `director` (Opus) entre solo cuando haga falta.
+
 ## Tareas buenas para un modelo barato o rápido
 - Escribir el guion (`voz/<video>/guion.txt`) con datos reales y su fuente.
 - Generar la voz: `python -I ../tts.py es-MX-JorgeNeural +24%` dentro de `voz/<video>/`.
