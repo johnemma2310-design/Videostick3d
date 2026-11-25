@@ -1,3 +1,4 @@
+import VOZ from "../../voz/apagon/palabras.json";
 // «Apagón mundial: las primeras 72 horas» v2 — 58.4 s (1753 frames), many places, small casts per place.
 // words: luz 32 · divertida 108 | Hora cero 144 · apagan 168 · semáforos 201 · internet 221 · elevadores 261 · pisos 303 ·
 // celular 349 · funciona 383 | Por poco tiempo 419 · antenas 468 · horas 523 · silencio total 575 | Hora doce 622 · agua 686 ·
@@ -134,6 +135,7 @@ const dofAt = (id: number, f: number) => {
 };
 
 export const APAGON: Story = {
+  voz: VOZ,
   TOTAL, camAt, layersAt, dofAt, state,
   MARKS: [
     { a: 144, b: 240, label: "HORA 0", sub: "se va la luz", col: "#ffd23f" },

@@ -88,3 +88,24 @@ export const FichaAnimales: React.FC = () => {
   }, []);
   return <AbsoluteFill><canvas ref={ref} width={2400} height={3240} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
 };
+
+// Ficha de movimiento: fila 1 Sticky camina, fila 2 Sticky corre, fila 3 Papá camina, fila 4 Niño corre, fila 5 bocas al hablar.
+// node scripts/fotos.mjs FichaMovimiento out/mov_ 0 0.3
+const PH = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+export const FichaMovimiento: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current!, g = c.getContext("2d")!;
+    g.fillStyle = "#e8f4ff"; g.fillRect(0, 0, c.width, c.height);
+    const cell = (col: number, row: number, d: (p: Pen) => void) => { g.save(); g.translate(col * 600, row * 1000); d(new Pen(g)); g.restore(); };
+    PH.forEach((w, i) => {
+      cell(i, 0, (p) => sticky(p, { expr: "smile", arm: "down", walk: w, scarf: w }));
+      cell(i, 1, (p) => sticky(p, { expr: "shock", arm: "down", walk: w, run: true, scarf: w }));
+      cell(i, 2, (p) => person(p, { ...PAPA, arm: "down", walk: w }));
+      cell(i, 3, (p) => person(p, { ...NINO, arm: "down", walk: w, run: true }));
+    });
+    [["neutral", 1], ["neutral", 2], ["neutral", 3], ["smile", 1], ["smile", 3], ["worried", 2], ["happy", 2], ["shock", 2]].forEach(([e, l], i) =>
+      cell(i, 4, (p) => sticky(p, { expr: e as Expr, arm: "down", talk: l as number })));
+  }, []);
+  return <AbsoluteFill><canvas ref={ref} width={4800} height={5000} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
+};

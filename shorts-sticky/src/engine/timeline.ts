@@ -36,5 +36,21 @@ export const makeTimeline = (SHOTS: Shot[], XFADE = 6) => {
 };
 
 /** quantised gait phase for walking cards */
-export const gait = (f: number, hz: number, off = 0) => Math.floor((((f / FPS) * hz + off) % 1) * 8) / 8;
+/** fase del paso 0..1 en 16 dibujos por ciclo (antes 8) */
+export const gait = (f: number, hz: number, off = 0) => Math.floor((((f / FPS) * hz + off) % 1) * 16) / 16;
+/** una palabra de palabras.json (edge-tts): texto, inicio y duración en segundos */
+export type Palabra = { w: string; t: number; d: number };
+/** apertura de boca 0..3 para el frame f: abre y cierra una vez por sílaba mientras dura cada palabra */
+export const bocaAt = (voz: Palabra[], f: number): number => {
+  const t = f / FPS;
+  for (const p of voz) {
+    if (t < p.t) return 0;
+    if (t < p.t + Math.max(p.d, 0.08)) {
+      const syl = Math.max(1, (p.w.toLowerCase().match(/[aeiouáéíóúü]+/g) || []).length);
+      const u = ((t - p.t) / Math.max(p.d, 0.08)) * syl;
+      return Math.max(1, Math.round(Math.abs(Math.sin(u * Math.PI)) * 3));
+    }
+  }
+  return 0;
+};
 export const blinkAt = (f: number, seed: number) => { const k = (f + Math.floor(hh(seed, 9) * 70)) % 71; return k < 4 ? [0.5, 1, 1, 0.5][k] : 0; };

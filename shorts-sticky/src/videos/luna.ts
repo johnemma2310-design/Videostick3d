@@ -1,3 +1,4 @@
+import VOZ from "../../voz/luna/palabras.json";
 // «¿Y si la Luna desapareciera esta noche?» v2 — 54.9 s (1647 frames), many places, small casts per place.
 // words: Luna 12 · desapareciera 18 · noche 42 · oscuridad 96 | no tiene luz propia 142 · espejo gigante 184 · Sol 236 ·
 // Sin ella 265 · más oscura del mes 333 | animales 392 · primero 423 | corales 465 · Luna llena 512 | tortugas 555 ·
@@ -144,6 +145,7 @@ const dofAt = (id: number, f: number) => {
 };
 
 export const LUNA: Story = {
+  voz: VOZ,
   TOTAL, camAt, layersAt, dofAt, state,
   MARKS: [
     { a: 140, b: 256, label: "LA LUNA NO BRILLA", sub: "refleja la luz del Sol", col: "#ffffff" },

@@ -1,3 +1,4 @@
+import VOZ from "../../voz/outro/palabras.json";
 // Cierre fijo de cada short: «Si quieres saber más, suscríbete y déjame en los comentarios qué más quieres saber.»
 // words: saber 17 · más 25 · suscríbete 39 · déjame 66 · comentarios 83 · qué más quieres saber 101-119
 import React from "react";
@@ -42,4 +43,4 @@ const overlay = (f: number) => {
     </svg>
   );
 };
-export const OUTRO: Story = { TOTAL, camAt, layersAt, dofAt: () => ({ cInf: 10, focus: [0, 1.05, 0] as V3 }), state, MARKS: [], overlay };
+export const OUTRO: Story = { voz: VOZ, TOTAL, camAt, layersAt, dofAt: () => ({ cInf: 10, focus: [0, 1.05, 0] as V3 }), state, MARKS: [], overlay };

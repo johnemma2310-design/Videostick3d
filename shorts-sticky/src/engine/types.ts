@@ -45,4 +45,6 @@ export type Story = {
   state: (id: number, f: number) => SceneState;
   MARKS: Mark[];
   overlay?: (f: number) => ReactNode;
+  /** palabras de la voz: si está, la boca de Sticky se mueve sola con el narrador */
+  voz?: { w: string; t: number; d: number }[];
 };

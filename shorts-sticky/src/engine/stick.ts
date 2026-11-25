@@ -77,7 +77,7 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
 };
 
 // ---------------- Sticky (the lead) ----------------
-export type StickyOpts = { expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number };
+export type StickyOpts = { expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number; run?: boolean; talk?: number };
 // ---------------- cel-shading (estilo v2): relleno con sombra de corte duro abajo a la derecha ----------------
 /** color de sombra: más oscuro y un poco lavanda, como la sombra de la referencia */
 export const sombra = (c: string, k = 0.74) => mix(shade(c, k), "#5a4a8a", 0.14);
@@ -114,7 +114,7 @@ const headV2 = (p: Pen, cx: number, cy: number, rx: number, ry: number, skin = W
 const SH_L: P2 = [234, 572], SH_R: P2 = [366, 572], SHADE = "#dfe3ea", BLUE = "#2f86d6", BLUE_D = "#1f5f9e";
 export const stickyHand = (o: StickyOpts): P2 => (o.arm === "up" ? [395 + 25 * Math.cos(o.ang ?? 0), 300 + 12 * Math.sin(o.ang ?? 0)] : rightArm(o.arm ?? "down", SH_R, 1, 0)[1]);
 /** cara expresiva de Sticky: cejas gruesas, ojitos negros con brillo, boca grande */
-const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0], blink = 0) => {
+const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0], blink = 0, talk = 0) => {
   const shock = expr === "shock" || expr === "scream";
   const closed = expr === "happy" || expr === "relief" || expr === "sleep" || (expr === "smile" && blink > 0.5);
   const lx = look[0] * 9, ly = look[1] * 9;
@@ -141,6 +141,14 @@ const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0
     p.poly([[xi, ey + yi - 9], [xm, ey + ym - 8], [xo, ey + yo - 5], [xo, ey + yo + 4], [xm, ey + ym + 7], [xi, ey + yi + 10]], INK, 5);
   }
   const mx = cx + 4, my = cy + 64;
+  // hablando: boca abierta que sube y baja por sílaba, conservando la emoción de las cejas
+  if (talk > 0 && expr !== "sleep" && expr !== "scream" && expr !== "frozen" && expr !== "shiver") {
+    const l = Math.min(3, talk), glad = expr === "smile" || expr === "happy" || expr === "relief" || expr === "lick";
+    if (glad) { p.ell(mx, my - 10, 30 + 4 * l, 10 + 10 * l, MOUTH, 8, 0, 180); }
+    else p.ell(mx, my + 2, 15 + 6 * l, 6 + 8 * l, MOUTH, 8);
+    if (l >= 2) p.ell(mx + 4, my + (glad ? 4 + 6 * l : 6 + 5 * l), 10 + 2 * l, 4 + 2 * l, "#e86e78", 0);
+    return;
+  }
   switch (expr) {
     case "smile": p.arc(mx, my - 18, 38, 22, 20, 160, 9); break;
     case "happy": case "relief": p.ell(mx, my - 12, 44, 38, MOUTH, 8, 0, 180); p.ell(mx + 6, my + 14, 18, 9, "#e86e78", 0); break;
@@ -157,8 +165,29 @@ const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0
   }
 };
 /** cara v2 a cualquier tamaño (k = 1 es la cabeza de Sticky, radio 150); `extra` dibuja antes (p. ej. la barba) */
-const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?: Look, blink = 0, extra?: () => void) => {
-  p.g.save(); p.g.translate(cx, cy); p.g.scale(k, k); if (extra) extra(); browFace(p, 0, 0, expr, look, blink); p.g.restore();
+const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?: Look, blink = 0, extra?: () => void, talk = 0) => {
+  p.g.save(); p.g.translate(cx, cy); p.g.scale(k, k); if (extra) extra(); browFace(p, 0, 0, expr, look, blink, talk); p.g.restore();
+};
+// ---------------- movimiento v2: piernas con rodilla y brazos con codo ----------------
+/** cuánto sube el cuerpo en esta fase del paso (más alto cuando una pierna pasa por debajo) */
+export const bobOf = (walk: number | undefined, run = false) => (walk === undefined ? 0 : Math.abs(Math.sin(walk * Math.PI * 2)) * (run ? 22 : 9));
+/** piernas vistas de frente: la rodilla se dobla hacia afuera y el pie se levanta al dar el paso; `foot` dibuja el zapato */
+const stepLegs = (p: Pen, hips: [P2, P2], walk: number | undefined, run: boolean, lw: number, foot: (x: number, y: number, side: number) => void, ground = 962) => {
+  ([[0, -1], [1, 1]] as const).forEach(([i, side]) => {
+    const [hx, hy] = hips[i];
+    let lift = 0, sway = 0;
+    if (walk !== undefined) { const ph = walk * Math.PI * 2 + (side > 0 ? Math.PI : 0); lift = Math.max(0, Math.sin(ph)); sway = Math.cos(ph); }
+    const fx = hx + side * (run ? 6 : 14) + sway * (run ? 8 : 5) * side, fy = ground - lift * (run ? 120 : 60);
+    const kx = (hx + fx) / 2 + side * (6 + lift * (run ? 44 : 26)), ky = (hy + fy) / 2 - lift * (run ? 36 : 16);
+    p.stroke([[hx, hy], [kx, ky], [fx, fy]], lw);
+    foot(fx, fy, side);
+  });
+};
+/** brazo que se balancea al caminar (codo apenas doblado) o que bombea al correr (codo a 90 grados) */
+const swingArm = (sho: P2, side: number, walk: number, run: boolean, k: number): [P2, P2] => {
+  const s = Math.sin(walk * Math.PI * 2 + (side > 0 ? 0 : Math.PI));
+  if (run) return [[sho[0] + side * 62 * k, sho[1] + (78 + s * 22) * k], [sho[0] + side * 26 * k, sho[1] + (24 - s * 58) * k]];
+  return [[sho[0] + side * (46 + s * 8) * k, sho[1] + 94 * k], [sho[0] + side * (64 + s * 22) * k, sho[1] + (176 - Math.max(0, s) * 46) * k]];
 };
 /** cápsula (torso) de x0..x1, y0..y1 */
 const capsule = (x0: number, x1: number, y0: number, y1: number): P2[] => {
@@ -170,11 +199,10 @@ const capsule = (x0: number, x1: number, y0: number, y1: number): P2[] => {
 };
 export const sticky = (p: Pen, o: StickyOpts) => {
   const lw = 13, ph = (o.scarf ?? 0) * Math.PI * 2, wk = o.walk;
-  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 50, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
+  const run = !!o.run, bob = bobOf(wk, run);
+  // piernas con rodilla y zapatitos (los pies se quedan en el piso; el cuerpo sube y baja)
+  stepLegs(p, [[274, 750 - bob], [326, 750 - bob]], wk, run, lw, (x, y, sd) => p.ell(x + sd * 10, y + 4, 28, 13, INK, 0), 964);
   p.g.save(); p.g.translate(0, -bob);
-  // piernas de palito y zapatitos
-  p.stroke([[274, 750], [252 + legA, 966 + bob]], lw); p.stroke([[326, 750], [348 - legA, 966 + bob]], lw);
-  p.ell(248 + legA, 968 + bob, 28, 13, INK, 0); p.ell(352 - legA, 968 + bob, 28, 13, INK, 0);
   // cuello + torso en cápsula blanca con sombra a la derecha
   p.stroke([[300, 450], [300, 520]], lw);
   celPaint(p, bean(300, 492, 776, 70, 84), (lit) => { p.g.fillStyle = lit ? WHITE : SHADE; p.g.fillRect(-2000, -2000, 6000, 6000); });
@@ -185,14 +213,14 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.stroke([[322 + 6 * 13 - 14, 508 + 6 * 24 - 2], [322 + 6 * 13 + 14, 508 + 6 * 24 + 2]], 4, BLUE_D);
   // brazos de palito
   const arm = o.arm ?? "down";
-  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" ? armPose(arm, SH_L, -1, wk ?? 0, 1) : armPose("down", SH_L, -1, wk ?? 0, 1);
+  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" ? armPose(arm, SH_L, -1, wk ?? 0, 1) : wk !== undefined ? swingArm(SH_L, -1, wk, run, 1) : armPose("down", SH_L, -1, 0, 1);
   p.stroke([SH_L, le, lh], lw); p.dot(lh[0], lh[1], 13);
   let re: P2, rh: P2;
-  if (arm === "up") { rh = stickyHand(o); re = [392, 440]; } else [re, rh] = rightArm(arm, SH_R, 1, wk ?? 0);
+  if (arm === "up") { rh = stickyHand(o); re = [392, 440]; } else if (arm === "down" && wk !== undefined) [re, rh] = swingArm(SH_R, 1, wk, run, 1); else [re, rh] = rightArm(arm, SH_R, 1, wk ?? 0);
   p.stroke([SH_R, re, rh], lw);
   // cabeza ovalada blanca con sombra gris (lado derecho y abajo)
   headV2(p, 300, 292, 150, 162);
-  browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0);
+  browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0, o.talk ?? 0);
   // bufanda: vuelta al cuello + nudo + punta corta al frente
   celPaint(p, ellPtsV(300, 490, 78, 30), (lit) => { p.g.fillStyle = lit ? BLUE : BLUE_D; p.g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
   p.arc(300, 478, 66, 20, 20, 160, 5, BLUE_D);
@@ -212,6 +240,8 @@ export type PersonOpts = {
   expr: Expr; arm?: Arm; look?: Look; walk?: number; blink?: number; skin?: string;
   /** ropa: estilo, color de camisa, pantalón, zapatos y detalle (botones, cinta, solapa) */
   ropa?: Ropa; shirt?: string; pants?: string; shoes?: string; trim?: string;
+  /** correr en vez de caminar (usa la misma fase `walk`); talk = boca abierta 0..3 */
+  run?: boolean; talk?: number;
 };
 const hatDraw = (p: Pen, o: PersonOpts, cx: number, cy: number, R: number) => {
   const c = o.hatCol ?? "#d84a3a", top = cy - R;
@@ -235,11 +265,10 @@ export const person = (p: Pen, o: PersonOpts) => {
   const dress = ropa === "dress", coat = ropa === "coat";
   const y0 = 486, y1 = dress ? 800 : 782, wTop = 66, wBot = dress ? 104 : 82, PY = coat ? 760 : 700;
   const SHL: P2 = [238, 540], SHR: P2 = [362, 540];
-  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 46, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
-  g.save(); g.translate(0, -bob);
+  const run = !!o.run, bob = bobOf(wk, run);
   // piernas de palito y zapatos de color
-  p.stroke([[276, 770], [260 + legA, 958 + bob]], lw); p.stroke([[324, 770], [340 - legA, 958 + bob]], lw);
-  for (const [x, d] of [[256 + legA, -1], [344 - legA, 1]] as const) cel(p, ellPtsV(x + d * 8, 962 + bob, 32, 15), shoes, 7, 0.05);
+  stepLegs(p, [[276, 770 - bob], [324, 770 - bob]], wk, run, lw, (x, y, d) => cel(p, ellPtsV(x + d * 8, y, 32, 15), shoes, 7, 0.05), 960);
+  g.save(); g.translate(0, -bob);
   p.stroke([[300, 440], [300, 500]], lw);
   // torso con ropa (sombra de corte duro)
   const B = bean(300, y0, y1, wTop, wBot);
@@ -282,9 +311,9 @@ export const person = (p: Pen, o: PersonOpts) => {
   if (o.bag) { p.stroke([[262, 492], [380, 700]], 7, o.bag); cel(p, [[360, 690], [436, 690], [436, 764], [360, 764]], o.bag, 7, 0.05); }
   // brazos de palito
   const arm = o.arm ?? "down";
-  const [le, lh] = armPose(arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" ? arm : "down", SHL, -1, wk ?? 0, 0.9);
+  const [le, lh] = arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" ? armPose(arm, SHL, -1, wk ?? 0, 0.9) : wk !== undefined ? swingArm(SHL, -1, wk, run, 0.9) : armPose("down", SHL, -1, 0, 0.9);
   p.stroke([SHL, le, lh], lw); p.dot(lh[0], lh[1], 11);
-  const [re, rh] = rightArm(arm, SHR, 0.9, wk ?? 0);
+  const [re, rh] = arm === "down" && wk !== undefined ? swingArm(SHR, 1, wk, run, 0.9) : rightArm(arm, SHR, 0.9, wk ?? 0);
   p.stroke([SHR, re, rh], lw);
   if (o.cane) { p.stroke([[rh[0], rh[1]], [rh[0] + 10, 968]], 9, "#7a4b2a"); p.arc(rh[0] - 14, rh[1], 22, 18, 180, 360, 9, "#7a4b2a"); }
   // cabeza: orejas (si no hay pelo largo), óvalo sombreado, cara expresiva
@@ -292,7 +321,7 @@ export const person = (p: Pen, o: PersonOpts) => {
   if (EARS.includes(o.hat ?? "none")) for (const sx of [-1, 1]) { p.ell(300 + sx * (R - 4), HY + 14, 20, 28, sx > 0 ? skinSh : skin, 9); p.arc(300 + sx * (R - 2), HY + 14, 9, 14, sx > 0 ? -60 : 120, sx > 0 ? 60 : 240, 5); }
   headV2(p, 300, HY, R, RY, skin);
   const k = R / 150;
-  browFaceK(p, 296, HY + 6, k, o.expr, o.look, o.blink ?? 0, () => { if (o.beard) { p.ell(4, 96, 96, 40, o.beard, 8, 0, 180); p.ell(4, 64, 40, 22, WHITE, 0); } });
+  browFaceK(p, 296, HY + 6, k, o.expr, o.look, o.blink ?? 0, () => { if (o.beard) { p.ell(4, 96, 96, 40, o.beard, 8, 0, 180); p.ell(4, 64, 40, 22, WHITE, 0); } }, o.talk ?? 0);
   if (o.glasses) { for (const sx of [-1, 1]) p.ell(296 + sx * 48 * k, HY - 8 * k, 34 * k, 30 * k, null, 7); p.stroke([[296 - 14 * k, HY - 10 * k], [296 + 14 * k, HY - 10 * k]], 6); }
   if (o.stache) {
     const my = HY + 46 * k, mx = 300;

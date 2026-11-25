@@ -1,5 +1,6 @@
 // Generic stickman world, posed per frame from a Story's SceneState. Four sets far apart (only the active one is
 // visible): park (0,0), street (STREET_X,0), beach (BEACH_X,0), space (its own group at the origin).
+import { bocaAt } from "./timeline";
 import * as THREE from "three";
 import { Pen } from "./toon";
 import { Pool, Actor, Fx, Stage, tier, tierW, blob, BODY, WIDE } from "./troop";
@@ -7,7 +8,7 @@ import { NOINK } from "./ink";
 import { LIGHTS, LOOK, LightPreset } from "./lights";
 import { TONE, CHAR, twoTone, untone } from "./shade";
 import { grassHD, cloudHD, rep, ctex } from "./paint";
-import { sticky, person, dog, cat, bird, turtle, penguin, car, wave, cow, chicken, pig, fishCard, beetle, spinTop, plane } from "./stick";
+import { type StickyOpts, sticky, person, dog, cat, bird, turtle, penguin, car, wave, cow, chicken, pig, fishCard, beetle, spinTop, plane } from "./stick";
 import type { Story, Env, Card, V3 } from "./types";
 import { FPS, hh, smooth } from "./timeline";
 import { buildSets, updateSets, SetRefs } from "./sets";
@@ -372,12 +373,18 @@ export class World {
     // ---- cards ----
     const st: Stage = { places: [], fx: [] };
     this.frustum.setFromProjectionMatrix(this.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
-    const rolls: number[] = [], casts: boolean[] = [];
+    const rolls: number[] = [], casts: boolean[] = [], breath: number[] = [];
     for (const cd of S.cards) {
       const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane";
       if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(cd.x, y + 1.1 * s, cd.z), (wide ? 4.5 : 1.6) * s))) continue;
       const d = cam.position.distanceTo(this.v.set(cd.x, y + 1 * s, cd.z)) / s;
       const size = wide ? tierW(d) : tier(d);
+      // Sticky mueve la boca con la voz del narrador (si la historia trae `voz`)
+      if (cd.kind === "sticky" && this.story.voz && cd.o.talk === undefined) {
+        const tk = bocaAt(this.story.voz, f);
+        if (tk) (cd as { o: StickyOpts }).o = { ...cd.o, talk: tk };
+      }
+      breath.push(wide ? 0 : Math.sin(t * 2.4 + cd.x * 1.7 + cd.z * 2.3));
       st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}`, x: cd.x, y, z: cd.z, size, scale: s, wide, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);
       const grounded = (cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
@@ -391,7 +398,7 @@ export class World {
       a.r = this.pool.req(p.key, w, h, k, p.draw);
       a.mesh.geometry = p.wide ? WIDE : BODY; a.mesh.visible = true; a.mesh.position.set(p.x, p.y, p.z);
       a.mesh.rotation.set(0, Math.atan2(cam.position.x - p.x, cam.position.z - p.z), rolls[ai]);
-      a.mesh.scale.set(p.mirror ? -s : s, s, s);
+      a.mesh.scale.set(p.mirror ? -s : s, s * (1 + 0.012 * breath[ai]), s); // respiración: sube y baja muy poquito
       // silueta de sombra: de cara al sol (de lado se vería como una rayita)
       const cast = this.sun.castShadow && casts[ai];
       a.caster.visible = cast;

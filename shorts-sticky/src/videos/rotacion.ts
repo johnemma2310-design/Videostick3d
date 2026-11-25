@@ -1,3 +1,4 @@
+import VOZ from "../../voz/rotacion/palabras.json";
 // «¿Y si la Tierra dejara de girar 1 segundo?» — 52.7 s (1581 frames), timed to public/voz_rotacion.wav.
 // words: Tierra 12 · girar 32 · segundo 52 · volando 86 | Aunque 119 · rapidísimo 173 · ecuador 202 · suelo gira 224 ·
 // mil seiscientos setenta 242 · hora 294 · sonido 345 | frenara 397 · golpe 410 · detiene 442 · pero tú no 461 · gente 505 ·
@@ -119,6 +120,7 @@ const dofAt = (id: number, f: number) => {
 };
 
 export const ROTACION: Story = {
+  voz: VOZ,
   TOTAL, camAt, layersAt, dofAt, state,
   MARKS: [
     { a: 40, b: 104, label: "1 SEGUNDO", sub: "la Tierra se detiene", col: "#ffd23f" },

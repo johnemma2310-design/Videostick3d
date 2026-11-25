@@ -91,6 +91,20 @@ ojitos negros con brillo, cejas expresivas y patas finas con patitas de color. P
 | `wave` | Ola gigante (tarjeta ancha) |
 | `top` | Trompo girando (para explicar el bamboleo de la Tierra) |
 
+## Movimiento
+
+![Movimiento](fotos/movimiento_ficha.jpg)
+
+Las filas de la ficha son: Sticky camina, Sticky corre, Papá camina, el niño corre y las bocas al hablar.
+
+- **Caminar:** pon `walk: gait(f, hz)` (fase 0..1, 16 dibujos por ciclo). La rodilla se dobla, el pie se levanta, el cuerpo sube y baja, y los brazos en `down` se balancean solos.
+- **Correr:** agrega `run: true`. Los pasos son más altos, los brazos bombean con el codo a 90° y el rebote es mayor. Usa `gait(f, 2.4)` o más rápido.
+- **Hablar:** si la historia tiene `voz: VOZ` (`import VOZ from "../../voz/<video>/palabras.json"`), **Sticky mueve la boca solo** con el narrador, una vez por sílaba. Para que otro personaje hable, pásale `talk: bocaAt(VOZ, f)` (0..3).
+- **Respirar:** todos los personajes suben y bajan muy poquito, de forma automática.
+- Para que los pies no resbalen, mueve al personaje a unos 1.3 m/s cuando camina (`hz ≈ 1.1`) y a unos 3.5 m/s cuando corre (`hz ≈ 2.4`).
+
+Para ver la ficha usa la composición `FichaMovimiento`: `node scripts/fotos.mjs FichaMovimiento out/mov_ 0 0.25`.
+
 ## Agregar un personaje nuevo
 
 1. Agrega la constante en `elenco.ts` con un comentario que diga cómo se ve.

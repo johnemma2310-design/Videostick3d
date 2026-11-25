@@ -1,6 +1,6 @@
 # Videostick3d — shorts animados de «Curiosidades con Sticky»
 
-Lee primero **[CONTEXTO_CLAUDE.md](CONTEXTO_CLAUDE.md)**: tiene las reglas del canal, cómo funciona el motor y los pasos para hacer un short.
+Si eres un agente de IA (Kimi, Claude u otro), empieza por **[AGENTS.md](AGENTS.md)**. Lee primero **[CONTEXTO_CLAUDE.md](CONTEXTO_CLAUDE.md)**: tiene las reglas del canal, cómo funciona el motor y los pasos para hacer un short.
 
 | Carpeta | Qué es |
 |---|---|
