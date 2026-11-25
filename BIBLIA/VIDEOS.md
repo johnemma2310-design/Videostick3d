@@ -9,6 +9,8 @@
 | Alejandro Magno (Gaugamela) | `alejandro-victoria` | 9.8 s | campo de batalla | Prueba de estilo, sin voz |
 | Cierre "suscríbete" | `shorts-sticky` / `Outro` | 5.7 s | parque | Se pega al final de cada video |
 
+**25 nov 2026:** Apagón, Luna y Rotación se volvieron a renderizar con el estilo v2: cuerpos con ropa, sombras con silueta, boca sincronizada y respiración. El cierre también se rehízo. Revisados: 1080×1920, cerca de -14 LUFS, con subtítulos y cierre.
+
 Cada carpeta de video tiene su `PUBLICAR.txt` con título calificado en vidIQ, descripción, hashtags y tags.
 
 **Pendiente:** el camino nevado del polo (Rotación) todavía se ve un poco beige.
