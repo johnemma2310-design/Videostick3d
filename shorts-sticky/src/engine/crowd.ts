@@ -1,10 +1,14 @@
 // Background cast: deterministic variety (hats, moustaches, beards, glasses, ties, bags, canes, kids, pets).
 import type { Card } from "./types";
-import type { PersonOpts, Expr, Arm, Hat } from "./stick";
+import type { PersonOpts, Expr, Arm, Hat, Ropa } from "./stick";
 import { hh, gait } from "./timeline";
 
 const HATS: Hat[] = ["none", "cap", "tophat", "bowler", "beanie", "cowboy", "bow", "hair", "pony", "helmet", "chef", "none", "hair"];
 const COLS = ["#d84a3a", "#2f86d6", "#3fa34d", "#f2b632", "#8a4fc9", "#e36fa8", "#2b2b33", "#f08a2c", "#18a3a3"];
+const ROPAS: Ropa[] = ["tee", "shirt", "vest", "jacket", "overall", "tee", "dress", "shirt", "jacket"];
+const SHIRTS = ["#d84a3a", "#2f86d6", "#3fa34d", "#f2b632", "#8a4fc9", "#e36fa8", "#f08a2c", "#18a3a3", "#cfe3ff", "#f4f1ea", "#7ab8ff", "#ffb3c7"];
+const PANTS = ["#3b3f52", "#3b5b9a", "#4a3a2a", "#2b2b33", "#6b6f7e", "#7a5236"];
+const SHOES = ["#5a3b2a", "#2b2b33", "#d84a3a", "#f4f1ea", "#3b5b9a"];
 const COATS = ["#c98f5a", "#f4f1ea", "#3a2c24", "#e8c27a", "#8a8a94", "#b05a2a"];
 
 export type Extra = { i: number; type: "person" | "kid" | "dog" | "cat" | "bird"; look: PersonOpts; coat: string; spot?: string };
@@ -17,6 +21,8 @@ export const extra = (i: number, seed = 1): Extra => {
     beard: type === "person" && r(6) < 0.15 ? "#4a3426" : undefined, glasses: r(7) < 0.3,
     tie: type === "person" && r(8) < 0.25 ? COLS[Math.floor(r(9) * COLS.length)] : undefined,
     bag: r(10) < 0.18 ? COLS[Math.floor(r(11) * COLS.length)] : undefined, cane: type === "person" && r(12) < 0.08,
+    ropa: ROPAS[Math.floor(r(15) * ROPAS.length)], shirt: SHIRTS[Math.floor(r(16) * SHIRTS.length)],
+    pants: PANTS[Math.floor(r(17) * PANTS.length)], shoes: SHOES[Math.floor(r(18) * SHOES.length)], trim: COLS[Math.floor(r(19) * COLS.length)],
   };
   return { i, type, look, coat: COATS[Math.floor(r(13) * COATS.length)], spot: r(14) < 0.4 ? "#3a2c24" : undefined };
 };

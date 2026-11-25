@@ -32,29 +32,29 @@ export const who = (o: PersonOpts, pos: V3, s: number = ESCALA.adulto, extra: Pa
 
 // ---------- La familia (aparece en casa, cocina, ascensor...) ----------
 /** Mamá: coleta rosa. */
-export const MAMA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#ff6fa3" };
+export const MAMA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#ff6fa3", ropa: "dress", shirt: "#18a3a3", trim: "#ffd23f", shoes: "#d84a3a" };
 /** Papá: bigote grueso, lentes y corbata azul. */
-export const PAPA: PersonOpts = { expr: "smile", hat: "none", stache: "thick", glasses: true, tie: "#2f86d6" };
+export const PAPA: PersonOpts = { expr: "smile", hat: "none", stache: "thick", glasses: true, tie: "#2f86d6", ropa: "shirt", shirt: "#cfe3ff", pants: "#3b3f52", shoes: "#3a2c24" };
 /** El niño: gorra amarilla (usar con ESCALA.nino). */
-export const NINO: PersonOpts = { expr: "happy", hat: "cap", hatCol: "#ffd23f" };
+export const NINO: PersonOpts = { expr: "happy", hat: "cap", hatCol: "#ffd23f", ropa: "tee", shirt: "#f08a2c", pants: "#3b5b9a", shoes: "#f4f1ea" };
 /** La abuela: moño morado, lentes y bastón. */
-export const ABUELA: PersonOpts = { expr: "smile", hat: "bow", hatCol: "#9b6bff", glasses: true, cane: true };
+export const ABUELA: PersonOpts = { expr: "smile", hat: "bow", hatCol: "#9b6bff", glasses: true, cane: true, ropa: "dress", shirt: "#b49be0", trim: "#f4f1ea", shoes: "#5a3b2a" };
 
 // ---------- Personajes de oficio (uno por escenario) ----------
 /** El granjero: sombrero vaquero, bigote y barba (granja). */
-export const GRANJERO: PersonOpts = { expr: "worried", hat: "cowboy", hatCol: "#b97d4a", stache: "thick", beard: "#7a5236", arm: "candle" };
+export const GRANJERO: PersonOpts = { expr: "worried", hat: "cowboy", hatCol: "#d9b26a", stache: "thick", beard: "#7a5236", arm: "candle", ropa: "overall", shirt: "#d84a3a", pants: "#3b5b9a", shoes: "#5a3b2a", trim: "#f2b632" };
 /** La científica: lentes, coleta morada (observatorio, aula, laboratorio). */
-export const CIENTIFICA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#8a4fc9", glasses: true };
+export const CIENTIFICA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#8a4fc9", glasses: true, ropa: "coat", shirt: "#f7f7fb", trim: "#8a4fc9", pants: "#3b3f52", shoes: "#2b2b33" };
 /** El profe: calvo con bigote rizado, lentes y corbata roja (aula). */
-export const PROFE: PersonOpts = { expr: "smile", hat: "none", stache: "curly", glasses: true, tie: "#d84a3a" };
+export const PROFE: PersonOpts = { expr: "smile", hat: "none", stache: "curly", glasses: true, tie: "#d84a3a", ropa: "jacket", shirt: "#8a6a4a", pants: "#4a3a2a", shoes: "#2b2b33" };
 /** La doctora: gorro blanco tipo cofia y bolso rojo (hospital). */
-export const DOCTORA: PersonOpts = { expr: "worried", hat: "chef", glasses: true, bag: "#d84a3a" };
+export const DOCTORA: PersonOpts = { expr: "worried", hat: "chef", glasses: true, ropa: "coat", shirt: "#f7f7fb", trim: "#5fc9b0", pants: "#5fc9b0", shoes: "#f4f1ea" };
 /** El tendero: gorra verde y bigote fino (tienda). */
-export const TENDERO: PersonOpts = { expr: "smile", hat: "cap", hatCol: "#3fa34d", stache: "thin" };
+export const TENDERO: PersonOpts = { expr: "smile", hat: "cap", hatCol: "#3fa34d", stache: "thin", ropa: "apron", shirt: "#3fa34d", pants: "#3b3f52", shoes: "#5a3b2a" };
 /** El obrero: casco amarillo y barba (calle, obras). */
-export const OBRERO: PersonOpts = { expr: "neutral", hat: "helmet", hatCol: "#f2b632", beard: "#4a3426" };
+export const OBRERO: PersonOpts = { expr: "neutral", hat: "helmet", hatCol: "#f2b632", beard: "#4a3426", ropa: "vest", shirt: "#f08a2c", pants: "#3b5b9a", shoes: "#5a3b2a", trim: "#f4f1ea" };
 /** El señor elegante: sombrero de copa, bigote rizado y bastón (calle, parque). */
-export const SENOR: PersonOpts = { expr: "neutral", hat: "tophat", hatCol: "#2b2b33", stache: "curly", cane: true };
+export const SENOR: PersonOpts = { expr: "neutral", hat: "tophat", hatCol: "#2b2b33", stache: "curly", cane: true, ropa: "jacket", shirt: "#2b2b33", pants: "#2b2b33", shoes: "#1a1a22", tie: "#d84a3a" };
 
 // ---------- Mascotas fijas ----------
 /** Toby, el perro de la familia: café con mancha oscura. */

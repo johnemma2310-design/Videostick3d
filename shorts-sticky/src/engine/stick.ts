@@ -1,7 +1,7 @@
 // The stickman cast, all drawn on the 600 x 1000 card design (soles at y = 975) or the 2000 x 1400 wide design
 // (ground at y = 1375). Sticky is the lead: biggest head, blue scarf. Everyone else: smaller white heads, varied
 // hats, moustaches, beards, glasses, bows; dogs, cats, birds, turtles, penguins, cartoon cars, a giant wave.
-import { Pen, INK } from "./toon";
+import { Pen, INK, shade, mix } from "./toon";
 
 type P2 = [number, number];
 const WHITE = "#ffffff", MOUTH = "#5a1e28";
@@ -78,6 +78,37 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
 
 // ---------------- Sticky (the lead) ----------------
 export type StickyOpts = { expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number };
+// ---------------- cel-shading (estilo v2): relleno con sombra de corte duro abajo a la derecha ----------------
+/** color de sombra: más oscuro y un poco lavanda, como la sombra de la referencia */
+export const sombra = (c: string, k = 0.74) => mix(shade(c, k), "#5a4a8a", 0.14);
+/** cuerpo en forma de frijol: más angosto arriba (wTop) y más ancho abajo (wBot) */
+export const bean = (cx: number, y0: number, y1: number, wTop: number, wBot: number): P2[] => {
+  const h = y1 - y0, ryt = Math.min(wTop, h * 0.36), ryb = Math.min(wBot, h * 0.42), pts: P2[] = [];
+  for (let a = 180; a <= 360; a += 9) pts.push([cx + wTop * Math.cos((a * Math.PI) / 180), y0 + ryt + ryt * Math.sin((a * Math.PI) / 180)]);
+  for (let a = 0; a <= 180; a += 9) pts.push([cx + wBot * Math.cos((a * Math.PI) / 180), y1 - ryb + ryb * Math.sin((a * Math.PI) / 180)]);
+  return pts;
+};
+const ellPtsV = (cx: number, cy: number, rx: number, ry: number): P2[] => { const o: P2[] = []; for (let a = 0; a < 360; a += 8) o.push([cx + rx * Math.cos((a * Math.PI) / 180), cy + ry * Math.sin((a * Math.PI) / 180)]); return o; };
+/** rellena `pts` con sombra de corte duro: `paint(lit)` pinta las capas (lit=false sombra, lit=true luz), recortado a la forma */
+export const celPaint = (p: Pen, pts: P2[], paint: (lit: boolean) => void, ol = 13, push = 0.13) => {
+  const g = p.g, xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2, w = Math.max(...xs) - Math.min(...xs);
+  g.save(); p.path(pts, true); g.clip();
+  paint(false);
+  g.save(); p.path(pts.map(([x, y]) => [cx + (x - cx) * 0.9 - w * push, cy + (y - cy) * 0.94 - 10] as P2), true); g.clip(); paint(true); g.restore();
+  g.restore();
+  if (ol) p.poly(pts, null, ol);
+};
+/** relleno liso con sombra de corte duro */
+export const cel = (p: Pen, pts: P2[], col: string, ol = 13, push = 0.13) =>
+  celPaint(p, pts, (lit) => { const g = p.g; g.fillStyle = lit ? col : sombra(col); g.fillRect(-2000, -2000, 6000, 6000); }, ol, push);
+/** cabeza ovalada con sombra suave (Sticky y todos) */
+const headV2 = (p: Pen, cx: number, cy: number, rx: number, ry: number, skin = WHITE) => {
+  p.ell(cx, cy, rx, ry, skin === WHITE ? "#dfe3ea" : sombra(skin, 0.86), 0);
+  p.ell(cx - rx * 0.08, cy - ry * 0.075, rx * 0.91, ry * 0.92, skin, 0);
+  p.ell(cx, cy, rx, ry, null, 14 * (rx / 150));
+};
+
 // Sticky v2 (nov 2026): head ovalada blanca con sombra gris de un lado, cejas gruesas expresivas, ojitos negros,
 // torso en cápsula blanca con contorno grueso, brazos y piernas de palito, y su bufanda azul anudada al cuello.
 const SH_L: P2 = [234, 572], SH_R: P2 = [366, 572], SHADE = "#dfe3ea", BLUE = "#2f86d6", BLUE_D = "#1f5f9e";
@@ -125,6 +156,10 @@ const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0
     }
   }
 };
+/** cara v2 a cualquier tamaño (k = 1 es la cabeza de Sticky, radio 150); `extra` dibuja antes (p. ej. la barba) */
+const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?: Look, blink = 0, extra?: () => void) => {
+  p.g.save(); p.g.translate(cx, cy); p.g.scale(k, k); if (extra) extra(); browFace(p, 0, 0, expr, look, blink); p.g.restore();
+};
 /** cápsula (torso) de x0..x1, y0..y1 */
 const capsule = (x0: number, x1: number, y0: number, y1: number): P2[] => {
   const cx = (x0 + x1) / 2, rx = (x1 - x0) / 2, ry = Math.min(rx, (y1 - y0) / 2);
@@ -142,9 +177,7 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.ell(248 + legA, 968 + bob, 28, 13, INK, 0); p.ell(352 - legA, 968 + bob, 28, 13, INK, 0);
   // cuello + torso en cápsula blanca con sombra a la derecha
   p.stroke([[300, 450], [300, 520]], lw);
-  p.poly(capsule(222, 378, 496, 772), WHITE, 0);
-  p.poly(capsule(300, 378, 510, 760).map(([x, y]) => [Math.max(x, 350), y] as P2), SHADE, 0);
-  p.poly(capsule(222, 378, 496, 772), null, 13);
+  celPaint(p, bean(300, 492, 776, 70, 84), (lit) => { p.g.fillStyle = lit ? WHITE : SHADE; p.g.fillRect(-2000, -2000, 6000, 6000); });
   // cola de la bufanda que ondea (detrás de los brazos)
   const tail: P2[] = [[322, 508]];
   for (let i = 1; i <= 6; i++) tail.push([322 + i * 13 + Math.sin(ph + i * 0.8) * 9 * (i / 6), 508 + i * 24]);
@@ -158,12 +191,10 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   if (arm === "up") { rh = stickyHand(o); re = [392, 440]; } else [re, rh] = rightArm(arm, SH_R, 1, wk ?? 0);
   p.stroke([SH_R, re, rh], lw);
   // cabeza ovalada blanca con sombra gris (lado derecho y abajo)
-  p.ell(300, 292, 150, 162, SHADE, 0);
-  p.ell(288, 280, 136, 150, WHITE, 0);
-  p.ell(300, 292, 150, 162, null, 14);
+  headV2(p, 300, 292, 150, 162);
   browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0);
   // bufanda: vuelta al cuello + nudo + punta corta al frente
-  p.ell(300, 490, 78, 30, BLUE, 9);
+  celPaint(p, ellPtsV(300, 490, 78, 30), (lit) => { p.g.fillStyle = lit ? BLUE : BLUE_D; p.g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
   p.arc(300, 478, 66, 20, 20, 160, 5, BLUE_D);
   p.poly([[276, 500], [304, 504], [296, 600], [264, 592]], BLUE, 8);
   p.stroke([[268, 582], [298, 588]], 4, BLUE_D);
@@ -172,11 +203,15 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.g.restore();
 };
 
-// ---------------- background people ----------------
+// ---------------- background people (v2: cuerpo con ropa y sombra de corte duro) ----------------
 export type Hat = "none" | "cap" | "tophat" | "bowler" | "beanie" | "cowboy" | "bow" | "hair" | "pony" | "helmet" | "chef";
+/** estilo de ropa del torso */
+export type Ropa = "tee" | "shirt" | "vest" | "overall" | "jacket" | "coat" | "dress" | "apron";
 export type PersonOpts = {
   hat?: Hat; hatCol?: string; stache?: "thick" | "curly" | "thin"; beard?: string; glasses?: boolean; tie?: string; bag?: string; cane?: boolean;
   expr: Expr; arm?: Arm; look?: Look; walk?: number; blink?: number; skin?: string;
+  /** ropa: estilo, color de camisa, pantalón, zapatos y detalle (botones, cinta, solapa) */
+  ropa?: Ropa; shirt?: string; pants?: string; shoes?: string; trim?: string;
 };
 const hatDraw = (p: Pen, o: PersonOpts, cx: number, cy: number, R: number) => {
   const c = o.hatCol ?? "#d84a3a", top = cy - R;
@@ -193,36 +228,80 @@ const hatDraw = (p: Pen, o: PersonOpts, cx: number, cy: number, R: number) => {
     case "pony": p.ell(cx, top + 30, R * 1.0, R * 0.6, c, 9, 180, 360); p.ell(cx + R * 1.05, cy - R * 0.2, R * 0.3, R * 0.6, c, 8); break;
   }
 };
+const EARS: Hat[] = ["none", "cap", "tophat", "bowler", "helmet", "chef", "cowboy", "beanie"];
 export const person = (p: Pen, o: PersonOpts) => {
-  const lw = 12, R = 110, HY = 380, NECK: P2 = [300, HY + R + 2], HIP: P2 = [300, 750], SHO: P2 = [300, 560], wk = o.walk;
-  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 50, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
-  p.g.save(); p.g.translate(0, -bob);
-  p.stroke([HIP, [250 + legA, 968 + bob]], lw); p.stroke([HIP, [350 - legA, 968 + bob]], lw);
-  p.ell(240 + legA, 970 + bob, 26, 11, INK, 0); p.ell(360 - legA, 970 + bob, 26, 11, INK, 0);
-  p.stroke([NECK, HIP], lw);
-  if (o.tie) p.poly([[300, NECK[1] + 6], [314, NECK[1] + 30], [306, NECK[1] + 120], [300, NECK[1] + 135], [294, NECK[1] + 120], [286, NECK[1] + 30]], o.tie, 5);
-  if (o.bag) { p.stroke([[300, NECK[1] + 20], [380, 700]], 6, o.bag); p.poly([[360, 690], [430, 690], [430, 760], [360, 760]], o.bag, 7); }
-  const arm = o.arm ?? "down";
-  const [le, lh] = armPose(arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" ? arm : "down", SHO, -1, wk ?? 0, 0.9);
-  p.stroke([SHO, le, lh], lw); p.dot(lh[0], lh[1], 11);
-  const [re, rh] = rightArm(arm, SHO, 0.9, wk ?? 0);
-  p.stroke([SHO, re, rh], lw);
-  if (o.cane) { p.stroke([[rh[0], rh[1]], [rh[0] + 10, 968]], 9, "#7a4b2a"); p.arc(rh[0] - 14, rh[1], 22, 18, 180, 360, 9, "#7a4b2a"); }
-  if (o.hat === "pony" || o.hat === "bow") {} // drawn on top
-  p.ell(300, HY, R, R * 0.96, o.skin ?? WHITE, 13);
-  p.arc(318, HY + 22, R * 0.86, R * 0.8, 10, 120, 8, "#d8dde8");
-  face(p, 300, HY, R, o.expr, o.look, o.blink ?? 0);
-  const k = R / 150;
-  if (o.glasses) { for (const sx of [-1, 1]) p.ell(300 + sx * 52 * k, HY - 30 * k, 46 * k, 40 * k, null, 7); p.stroke([[300 - 8 * k, HY - 32 * k], [300 + 8 * k, HY - 32 * k]], 6); }
-  if (o.beard) p.ell(300, HY + 72 * k, 80 * k, 46 * k, o.beard, 7, 0, 180);
-  if (o.stache) {
-    const my = HY + 30 * k;
-    if (o.stache === "curly") { p.arc(300 - 30 * k, my, 30 * k, 16 * k, 0, 200, 12 * k); p.arc(300 + 30 * k, my, 30 * k, 16 * k, -20, 180, 12 * k); }
-    else p.poly([[300, my - 10 * k], [300 + 52 * k, my - 2 * k], [300 + 46 * k, my + 14 * k], [300, my + 6 * k], [300 - 46 * k, my + 14 * k], [300 - 52 * k, my - 2 * k]], INK, o.stache === "thin" ? 2 : 4);
+  const lw = 11, R = 128, RY = 136, HY = 322, wk = o.walk, g = p.g;
+  const ropa = o.ropa ?? "tee", shirt = o.shirt ?? "#2f86d6", pants = o.pants ?? "#3b3f52", shoes = o.shoes ?? "#5a3b2a", trim = o.trim ?? "#f2b632";
+  const dress = ropa === "dress", coat = ropa === "coat";
+  const y0 = 486, y1 = dress ? 800 : 782, wTop = 66, wBot = dress ? 104 : 82, PY = coat ? 760 : 700;
+  const SHL: P2 = [238, 540], SHR: P2 = [362, 540];
+  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 46, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
+  g.save(); g.translate(0, -bob);
+  // piernas de palito y zapatos de color
+  p.stroke([[276, 770], [260 + legA, 958 + bob]], lw); p.stroke([[324, 770], [340 - legA, 958 + bob]], lw);
+  for (const [x, d] of [[256 + legA, -1], [344 - legA, 1]] as const) cel(p, ellPtsV(x + d * 8, 962 + bob, 32, 15), shoes, 7, 0.05);
+  p.stroke([[300, 440], [300, 500]], lw);
+  // torso con ropa (sombra de corte duro)
+  const B = bean(300, y0, y1, wTop, wBot);
+  celPaint(p, B, (lit) => {
+    const f = (c: string) => (lit ? c : sombra(c));
+    const rect = (c: string, x0: number, yA: number, x1: number, yB: number) => { g.fillStyle = f(c); g.fillRect(x0, yA, x1 - x0, yB - yA); };
+    rect(shirt, 0, 0, 600, 1000);
+    if (!dress) rect(pants, 0, PY, 600, 1000);
+    if (ropa === "overall") rect(pants, 254, 600, 346, PY);
+    if (ropa === "apron") rect("#f4f1ea", 250, 560, 350, 790);
+    if (ropa === "vest" || ropa === "jacket" || coat) { // pechera interior en V
+      g.fillStyle = f(coat ? trim : ropa === "jacket" ? "#f4f1ea" : "#f7f2e4");
+      p.path([[268, 486], [332, 486], [300, ropa === "vest" ? 600 : 640]], true); g.fill();
+    }
+    if (dress) rect(trim, 0, 640, 600, 658);
+  });
+  // detalles de tinta: cuellos, botones, bolsillos, tirantes
+  const btn = (x: number, y: number, c = "#f4f1ea") => p.ell(x, y, 7, 7, c, 3);
+  switch (ropa) {
+    case "tee": p.arc(300, 488, 34, 18, 20, 160, 6); p.poly([[318, 560], [348, 560], [346, 592], [320, 592]], null, 5); break;
+    case "shirt":
+      p.poly([[300, 496], [266, 486], [274, 528]], "#f7f2e4", 5); p.poly([[300, 496], [334, 486], [326, 528]], "#f7f2e4", 5);
+      for (const y of [550, 595, 640]) btn(300, y); break;
+    case "vest": p.stroke([[268, 486], [300, 600], [332, 486]], 5); for (const y of [622, 662]) btn(300, y, trim); p.stroke([[318, 650], [350, 650]], 5); p.stroke([[250, 650], [282, 650]], 5); break;
+    case "overall":
+      for (const sx of [-1, 1]) { p.stroke([[300 + sx * 44, 492], [300 + sx * 38, 604]], 16, pants); p.stroke([[300 + sx * 48, 496], [300 + sx * 42, 604]], 3, sombra(pants)); btn(300 + sx * 38, 608, trim); }
+      p.poly([[278, 630], [322, 630], [320, 662], [280, 662]], null, 5); break;
+    case "jacket": p.stroke([[268, 486], [300, 640], [332, 486]], 5); p.stroke([[300, 640], [300, PY]], 5); p.stroke([[248, 680], [282, 680]], 5); p.stroke([[318, 680], [352, 680]], 5); break;
+    case "coat":
+      p.stroke([[268, 486], [300, 640], [332, 486]], 5); p.stroke([[300, 640], [300, 780]], 5);
+      p.poly([[316, 600], [350, 600], [348, 640], [318, 640]], null, 5); p.stroke([[326, 590], [326, 612]], 5, "#d84a3a");
+      for (const y of [670, 720]) btn(286, y); break;
+    case "apron":
+      p.stroke([[262, 560], [282, 492]], 6, "#f4f1ea"); p.stroke([[338, 560], [318, 492]], 6, "#f4f1ea");
+      p.stroke([[250, 740], [250, 560], [350, 560], [350, 740]], 5); p.poly([[274, 650], [326, 650], [326, 700], [274, 700]], null, 4); break;
+    case "dress": p.stroke([[246, 658], [354, 658]], 4, sombra(trim)); break;
   }
-  hatDraw(p, o, 300, HY, R);
+  if (!dress && ropa !== "apron") p.stroke([[226, PY], [374, PY]], 5);
+  if (o.tie) p.poly([[300, 494], [314, 512], [308, 600], [300, 616], [292, 600], [286, 512]], o.tie, 5);
+  if (o.bag) { p.stroke([[262, 492], [380, 700]], 7, o.bag); cel(p, [[360, 690], [436, 690], [436, 764], [360, 764]], o.bag, 7, 0.05); }
+  // brazos de palito
+  const arm = o.arm ?? "down";
+  const [le, lh] = armPose(arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" ? arm : "down", SHL, -1, wk ?? 0, 0.9);
+  p.stroke([SHL, le, lh], lw); p.dot(lh[0], lh[1], 11);
+  const [re, rh] = rightArm(arm, SHR, 0.9, wk ?? 0);
+  p.stroke([SHR, re, rh], lw);
+  if (o.cane) { p.stroke([[rh[0], rh[1]], [rh[0] + 10, 968]], 9, "#7a4b2a"); p.arc(rh[0] - 14, rh[1], 22, 18, 180, 360, 9, "#7a4b2a"); }
+  // cabeza: orejas (si no hay pelo largo), óvalo sombreado, cara expresiva
+  const skin = o.skin ?? WHITE, skinSh = skin === WHITE ? "#dfe3ea" : sombra(skin, 0.86);
+  if (EARS.includes(o.hat ?? "none")) for (const sx of [-1, 1]) { p.ell(300 + sx * (R - 4), HY + 14, 20, 28, sx > 0 ? skinSh : skin, 9); p.arc(300 + sx * (R - 2), HY + 14, 9, 14, sx > 0 ? -60 : 120, sx > 0 ? 60 : 240, 5); }
+  headV2(p, 300, HY, R, RY, skin);
+  const k = R / 150;
+  browFaceK(p, 296, HY + 6, k, o.expr, o.look, o.blink ?? 0, () => { if (o.beard) { p.ell(4, 96, 96, 40, o.beard, 8, 0, 180); p.ell(4, 64, 40, 22, WHITE, 0); } });
+  if (o.glasses) { for (const sx of [-1, 1]) p.ell(296 + sx * 48 * k, HY - 8 * k, 34 * k, 30 * k, null, 7); p.stroke([[296 - 14 * k, HY - 10 * k], [296 + 14 * k, HY - 10 * k]], 6); }
+  if (o.stache) {
+    const my = HY + 46 * k, mx = 300;
+    if (o.stache === "curly") { p.arc(mx - 26 * k, my, 28 * k, 15 * k, 0, 200, 12 * k); p.arc(mx + 26 * k, my, 28 * k, 15 * k, -20, 180, 12 * k); }
+    else p.poly([[mx, my - 10 * k], [mx + 50 * k, my - 2 * k], [mx + 44 * k, my + 14 * k], [mx, my + 6 * k], [mx - 44 * k, my + 14 * k], [mx - 50 * k, my - 2 * k]], INK, o.stache === "thin" ? 2 : 4);
+  }
+  hatDraw(p, o, 300, HY - (RY - R), R);
   if (arm !== "down" && arm !== "up" && arm !== "cheer" && arm !== "fly" && arm !== "wave" && arm !== "point" && arm !== "cover" && arm !== "hug") held(p, arm, rh, 0.9); else p.dot(rh[0], rh[1], 11);
-  p.g.restore();
+  g.restore();
 };
 
 // ---------------- animals (side view, facing screen-right) ----------------

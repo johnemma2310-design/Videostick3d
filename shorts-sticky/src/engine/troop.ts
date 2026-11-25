@@ -54,7 +54,12 @@ const CARD = new THREE.PlaneGeometry(1, 1);
 
 export class Actor {
   mesh: THREE.Mesh; mat: THREE.MeshLambertMaterial; r: Req | null = null;
+  /** sombra con silueta: la misma tarjeta girada hacia el sol, invisible en cámara, solo proyecta sombra */
+  caster: THREE.Mesh; casterMat: THREE.MeshBasicMaterial;
   constructor(parent: THREE.Object3D) {
+    this.casterMat = new THREE.MeshBasicMaterial({ map: blank, alphaTest: 0.5, side: THREE.DoubleSide, colorWrite: false, depthWrite: false });
+    this.caster = new THREE.Mesh(BODY, this.casterMat); this.caster.castShadow = true; this.caster.visible = false;
+    this.caster.layers.set(NOINK); parent.add(this.caster);
     this.mat = cardShade(new THREE.MeshLambertMaterial({ map: blank, alphaTest: 0.5, side: THREE.DoubleSide }));
     this.mesh = new THREE.Mesh(BODY, this.mat);
     this.mesh.onBeforeRender = (r) => { const rt = r.getRenderTarget(); CARD_K.uPx.value = (rt ? rt.height : r.domElement.height) / 1920; };
@@ -62,7 +67,7 @@ export class Actor {
     this.mesh.rotation.order = "YXZ"; this.mesh.renderOrder = 1; this.mesh.layers.set(NOINK);
     parent.add(this.mesh);
   }
-  bind() { const t = this.r?.tex; if (t) this.mat.map = t; }
+  bind() { const t = this.r?.tex; if (t) { this.mat.map = t; this.casterMat.map = t; } }
 }
 export class Fx {
   mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; soft: THREE.MeshBasicMaterial; blob: THREE.MeshBasicMaterial; r: Req | null = null;
@@ -104,11 +109,11 @@ const toSrgb = (v: number) => { const c = clamp01(v); return c <= 0.0031308 ? 12
 const hexOf = (c: [number, number, number], k: number) => "#" + c.map((v) => Math.round(255 * toSrgb(1 - (1 - v) * k)).toString(16).padStart(2, "0")).join("");
 const CONTACT: [number, number, number] = [0.2, 0.21, 0.33], TAIL: [number, number, number] = [0.42, 0.44, 0.62];
 /** day contact pool right under the feet + a soft tail away from the sun (template cast.ts blob) */
-export const blob = (out: Stage, sun: THREE.Vector3, x: number, y: number, z: number, sc = 1, k = 1) => {
+export const blob = (out: Stage, sun: THREE.Vector3, x: number, y: number, z: number, sc = 1, k = 1, tail = true) => {
   const hl = Math.hypot(sun.x, sun.z) || 1, ox = -sun.x / hl, oz = -sun.z / hl, rot = Math.atan2(-ox, -oz);
   const el = Math.asin(Math.min(0.99, Math.max(0.1, sun.y)));
   const len = Math.min(2.4, Math.max(0.5, 1.6 / Math.tan(el))) * sc, h = len + 0.55 * sc, c = 0.3 * h;
   const tc = hexOf(TAIL, k), cc = hexOf(CONTACT, k);
-  out.fx.push({ key: `blob|shadow|${tc}`, cw: 128, ch: 256, draw: (p) => fxShadow(p, tc), x: x + ox * c, y: y + 0.018, z: z + oz * c, w: 0.72 * sc, h, flat: true, rot });
+  if (tail) out.fx.push({ key: `blob|shadow|${tc}`, cw: 128, ch: 256, draw: (p) => fxShadow(p, tc), x: x + ox * c, y: y + 0.018, z: z + oz * c, w: 0.72 * sc, h, flat: true, rot });
   out.fx.push({ key: `blob|contact|${cc}`, cw: 128, ch: 128, draw: (p) => fxContact(p, cc), x, y: y + 0.022, z, w: 0.52 * sc, h: 0.4 * sc, flat: true, rot });
 };

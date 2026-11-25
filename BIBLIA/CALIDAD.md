@@ -12,6 +12,8 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 | Cámara | Tomas con keyframes suaves (`glide`) y fundido de 6 frames entre tomas |
 | Enfoque | Siempre en Sticky; el fondo un poco desenfocado |
 | Colores | Saturados y alegres; la noche es azul, nunca negra |
+| Personajes | Estilo v2: cuerpo con ropa y sombra de corte duro (ver `fotos/elenco_ficha.jpg`) |
+| Sombras | Cada personaje proyecta su silueta en el piso (la tarjeta se gira hacia el sol solo para la sombra) |
 
 ## Sonido y voz
 

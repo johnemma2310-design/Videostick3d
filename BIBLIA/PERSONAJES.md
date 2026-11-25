@@ -8,7 +8,20 @@ import { sticky, who, MAMA, PAPA, NINO, ABUELA, ESCALA } from "../engine/elenco"
 
 No redefinas un personaje dentro de un video. Si necesitas uno nuevo, agrégalo en `elenco.ts` y apúntalo en esta tabla.
 
-Todos son **stickman 2D** (tarjetas dibujadas) dentro de un mundo 3D de colores: cuerpo de palito negro, cabeza blanca redonda y ojos grandes.
+![Elenco](fotos/elenco_ficha.jpg)
+
+**Estilo v2 (nov 2026), igual para todos:** cabeza ovalada blanca con sombra gris, cejas gruesas expresivas y ojitos negros.
+El torso tiene **forma de frijol, con ropa** (camisa, chaleco, overol, saco, bata, vestido o delantal), cuello, botones y bolsillos.
+Todo lleva **sombra de corte duro** (cel-shading). Brazos y piernas son de palito, los zapatos de color, y hay orejas cuando no hay pelo largo.
+En 3D cada personaje proyecta **su silueta como sombra en el piso**. Escena de muestra: `fotos/escena_v2.jpg`.
+
+La ropa se elige en `PersonOpts`:
+- `ropa`: `tee`, `shirt`, `vest`, `overall`, `jacket`, `coat`, `dress` o `apron`
+- `shirt`, `pants` y `shoes`: colores de camisa, pantalón y zapatos
+- `trim`: botones, cinta o solapa
+
+Los extras reciben ropa al azar (pero fija) en `crowd.ts`. Para ver el elenco usa la composición `FichaElenco`:
+`node scripts/fotos.mjs FichaElenco out/elenco_ 0 0.4`.
 
 ## Sticky, el protagonista
 
@@ -36,17 +49,17 @@ Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug co
 
 | Constante | Quién | Cómo se ve | Dónde sale |
 |---|---|---|---|
-| `MAMA` (`MOM`) | Mamá | Coleta rosa `#ff6fa3` | Casa, cocina |
-| `PAPA` (`DAD`) | Papá | Bigote grueso, lentes, corbata azul | Casa, ascensor |
-| `NINO` (`KID`) | El niño | Gorra amarilla, escala `0.54` | Casa, parque |
-| `ABUELA` (`GRANNY`) | La abuela | Moño morado, lentes, bastón | Cocina |
-| `GRANJERO` (`FARMER`) | El granjero | Sombrero vaquero, bigote y barba | Granja |
-| `CIENTIFICA` | La científica | Coleta morada, lentes | Observatorio, aula |
-| `PROFE` | El profe | Bigote rizado, lentes, corbata roja | Aula |
-| `DOCTORA` | La doctora | Gorro blanco, lentes, bolso rojo | Hospital |
-| `TENDERO` | El tendero | Gorra verde, bigote fino | Tienda |
-| `OBRERO` | El obrero | Casco amarillo, barba | Calle |
-| `SENOR` | El señor elegante | Sombrero de copa, bigote rizado, bastón | Calle, parque |
+| `MAMA` (`MOM`) | Mamá | Coleta rosa, vestido turquesa con cinta amarilla | Casa, cocina |
+| `PAPA` (`DAD`) | Papá | Bigote grueso, lentes, camisa celeste, corbata azul | Casa, ascensor |
+| `NINO` (`KID`) | El niño | Gorra amarilla, playera naranja, jeans (escala `0.54`) | Casa, parque |
+| `ABUELA` (`GRANNY`) | La abuela | Moño morado, lentes, bastón, vestido lila | Cocina |
+| `GRANJERO` (`FARMER`) | El granjero | Sombrero de paja, bigote, barba, camisa roja con overol de mezclilla | Granja |
+| `CIENTIFICA` | La científica | Coleta morada, lentes, bata blanca | Observatorio, aula |
+| `PROFE` | El profe | Bigote rizado, lentes, saco café, corbata roja | Aula |
+| `DOCTORA` | La doctora | Gorro blanco, lentes, bata blanca, uniforme verde agua | Hospital |
+| `TENDERO` | El tendero | Gorra verde, bigote fino, delantal | Tienda |
+| `OBRERO` | El obrero | Casco amarillo, barba, chaleco naranja | Calle |
+| `SENOR` | El señor elegante | Sombrero de copa, bigote rizado, bastón, traje negro | Calle, parque |
 | `TOBY` | El perro de la familia | Café con mancha oscura | Casa, parque |
 | `MICHI` | La gata de la familia | Gris | Casa |
 

@@ -36,3 +36,31 @@ export const FichaSticky: React.FC = () => {
     </AbsoluteFill>
   );
 };
+
+// Hoja del elenco completo (BIBLIA/fotos/elenco_ficha.jpg): node scripts/fotos.mjs FichaElenco out/elenco_ 0 0.5
+import { person } from "../engine/stick";
+import { MAMA, PAPA, NINO, ABUELA, GRANJERO, CIENTIFICA, PROFE, DOCTORA, TENDERO, OBRERO, SENOR } from "../engine/elenco";
+const CAST = [
+  { n: "STICKY", o: null }, { n: "MAMÁ", o: MAMA }, { n: "PAPÁ", o: PAPA }, { n: "NIÑO", o: NINO },
+  { n: "ABUELA", o: ABUELA }, { n: "GRANJERO", o: GRANJERO }, { n: "CIENTÍFICA", o: CIENTIFICA }, { n: "PROFE", o: PROFE },
+  { n: "DOCTORA", o: DOCTORA }, { n: "TENDERO", o: TENDERO }, { n: "OBRERO", o: OBRERO }, { n: "SEÑOR", o: SENOR },
+];
+export const FichaElenco: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current!, g = c.getContext("2d")!;
+    g.fillStyle = "#cfeaff"; g.fillRect(0, 0, c.width, c.height);
+    CAST.forEach((m, i) => {
+      const cx = (i % 4) * 600, cy = Math.floor(i / 4) * 1080;
+      g.save(); g.translate(cx, cy + 20);
+      if (m.o) person(new Pen(g), { ...m.o, arm: m.o.arm ?? "down" }); else sticky(new Pen(g), { expr: "smile", arm: "wave", scarf: 0.3 });
+      g.restore();
+      g.fillStyle = "#241726"; g.font = "bold 46px Arial"; g.textAlign = "center"; g.fillText(m.n, cx + 300, cy + 1060);
+    });
+  }, []);
+  return (
+    <AbsoluteFill>
+      <canvas ref={ref} width={2400} height={3240} style={{ width: "100%", height: "100%" }} />
+    </AbsoluteFill>
+  );
+};

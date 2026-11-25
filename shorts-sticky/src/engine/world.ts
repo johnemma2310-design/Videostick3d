@@ -372,7 +372,7 @@ export class World {
     // ---- cards ----
     const st: Stage = { places: [], fx: [] };
     this.frustum.setFromProjectionMatrix(this.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
-    const rolls: number[] = [];
+    const rolls: number[] = [], casts: boolean[] = [];
     for (const cd of S.cards) {
       const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane";
       if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(cd.x, y + 1.1 * s, cd.z), (wide ? 4.5 : 1.6) * s))) continue;
@@ -380,7 +380,10 @@ export class World {
       const size = wide ? tierW(d) : tier(d);
       st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}`, x: cd.x, y, z: cd.z, size, scale: s, wide, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);
-      if ((cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && d * s < 40 && cd.kind !== "wave") blob(st, sunDir, cd.x, y, cd.z, (wide ? 2.2 : cd.kind === "sticky" || cd.kind === "person" ? 0.8 : 0.6) * s);
+      const grounded = (cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
+      casts.push(grounded && d * s < 60);
+      // con sombra de silueta solo queda la mancha de contacto bajo los pies
+      if (grounded && d * s < 40) blob(st, sunDir, cd.x, y, cd.z, (wide ? 2.2 : cd.kind === "sticky" || cd.kind === "person" ? 0.8 : 0.6) * s, 1, false);
     }
     let ai = 0;
     for (const p of st.places) {
@@ -388,9 +391,14 @@ export class World {
       a.r = this.pool.req(p.key, w, h, k, p.draw);
       a.mesh.geometry = p.wide ? WIDE : BODY; a.mesh.visible = true; a.mesh.position.set(p.x, p.y, p.z);
       a.mesh.rotation.set(0, Math.atan2(cam.position.x - p.x, cam.position.z - p.z), rolls[ai]);
-      a.mesh.scale.set(p.mirror ? -s : s, s, s); ai++;
+      a.mesh.scale.set(p.mirror ? -s : s, s, s);
+      // silueta de sombra: de cara al sol (de lado se vería como una rayita)
+      const cast = this.sun.castShadow && casts[ai];
+      a.caster.visible = cast;
+      if (cast) { a.caster.geometry = a.mesh.geometry; a.caster.position.copy(a.mesh.position); a.caster.rotation.set(0, Math.atan2(sunDir.x, sunDir.z), rolls[ai], "YXZ"); a.caster.scale.copy(a.mesh.scale); }
+      ai++;
     }
-    for (let i = ai; i < this.actors.length; i++) this.actors[i].mesh.visible = false;
+    for (let i = ai; i < this.actors.length; i++) { this.actors[i].mesh.visible = false; this.actors[i].caster.visible = false; }
     let fi = 0;
     for (const p of st.fx) {
       if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(p.x, p.y, p.z), Math.max(p.w, p.h)))) continue;
