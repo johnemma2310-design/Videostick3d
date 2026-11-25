@@ -64,3 +64,27 @@ export const FichaElenco: React.FC = () => {
     </AbsoluteFill>
   );
 };
+
+// Hoja de animales (BIBLIA/fotos/animales_ficha.jpg): node scripts/fotos.mjs FichaAnimales out/animales_ 0 0.4
+import { dog, cat, bird, turtle, penguin, cow, chicken, pig, fishCard, beetle } from "../engine/stick";
+const ANIM: { n: string; d: (p: Pen) => void }[] = [
+  { n: "TOBY (PERRO)", d: (p) => dog(p, { coat: "#c98f5a", spot: "#3a2c24" }) }, { n: "PERRO LADRA", d: (p) => dog(p, { coat: "#f4f1ea", mood: "bark" }) },
+  { n: "MICHI (GATA)", d: (p) => cat(p, { coat: "#8a8a94" }) }, { n: "GATO ASUSTADO", d: (p) => cat(p, { coat: "#f08a2c", mood: "scared" }) },
+  { n: "PÁJARO", d: (p) => bird(p, { coat: "#7ab8ff", spot: "#2f86d6" }) }, { n: "TORTUGA", d: (p) => turtle(p, { coat: "#3fa34d" }) },
+  { n: "PINGÜINO", d: (p) => penguin(p, { coat: "#000000" }) }, { n: "VACA", d: (p) => cow(p, { coat: "#ffffff" }) },
+  { n: "GALLINA", d: (p) => chicken(p, { coat: "#ffffff" }) }, { n: "CERDO", d: (p) => pig(p, { coat: "#f7a8c0" }) },
+  { n: "PEZ", d: (p) => fishCard(p, { coat: "#f2b632", spot: "#f4f1ea" }) }, { n: "ESCARABAJO", d: (p) => beetle(p, { coat: "#8a4fc9" }) },
+];
+export const FichaAnimales: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current!, g = c.getContext("2d")!;
+    g.fillStyle = "#d8f0d0"; g.fillRect(0, 0, c.width, c.height);
+    ANIM.forEach((m, i) => {
+      const cx = (i % 4) * 600, cy = Math.floor(i / 4) * 1080;
+      g.save(); g.translate(cx, cy + 20); m.d(new Pen(g)); g.restore();
+      g.fillStyle = "#241726"; g.font = "bold 46px Arial"; g.textAlign = "center"; g.fillText(m.n, cx + 300, cy + 1060);
+    });
+  }, []);
+  return <AbsoluteFill><canvas ref={ref} width={2400} height={3240} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
+};

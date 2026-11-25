@@ -75,6 +75,12 @@ Los extras salen de `extra(i, seed)` en `crowd.ts`. Con la misma semilla siempre
 
 ## Animales y cosas que son tarjetas
 
+![Animales](fotos/animales_ficha.jpg)
+
+Los animales también están en el estilo v2: cuerpo relleno con sombra de corte duro, manchas recortadas dentro del cuerpo,
+ojitos negros con brillo, cejas expresivas y patas finas con patitas de color. Para ver la ficha usa la composición `FichaAnimales`:
+`node scripts/fotos.mjs FichaAnimales out/animales_ 0 0.4`.
+
 | `kind` | Qué es |
 |---|---|
 | `dog` `cat` `bird` | Mascotas y pájaros. `mood` puede ser `calm`, `scared`, `howl`, `sleep` o `bark` |

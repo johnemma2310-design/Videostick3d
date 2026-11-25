@@ -304,71 +304,105 @@ export const person = (p: Pen, o: PersonOpts) => {
   g.restore();
 };
 
-// ---------------- animals (side view, facing screen-right) ----------------
+// ---------------- animals v2 (side view, facing screen-right): cuerpo relleno con sombra de corte duro ----------------
 export type AnimalOpts = { coat: string; walk?: number; mood?: "calm" | "scared" | "howl" | "sleep" | "bark"; spot?: string };
-const legs4 = (p: Pen, x0: number, x1: number, y: number, ph: number | undefined, len: number, w: number) => {
-  const a = ph === undefined ? 0 : Math.sin(ph * Math.PI * 2) * 30;
-  for (const [x, s] of [[x0, 1], [x0 + 30, -1], [x1, -1], [x1 + 30, 1]] as const) p.stroke([[x, y], [x + a * s, y + len]], w);
+/** puntos de una elipse (rot en grados) */
+const EP = (cx: number, cy: number, rx: number, ry: number, rot = 0): P2[] => {
+  const o: P2[] = [], c = Math.cos((rot * Math.PI) / 180), s = Math.sin((rot * Math.PI) / 180);
+  for (let a = 0; a < 360; a += 8) { const x = rx * Math.cos((a * Math.PI) / 180), y = ry * Math.sin((a * Math.PI) / 180); o.push([cx + x * c - y * s, cy + x * s + y * c]); }
+  return o;
 };
+/** elipse con sombra de corte duro */
+const celE = (p: Pen, cx: number, cy: number, rx: number, ry: number, col: string, ol = 10, rot = 0) => cel(p, EP(cx, cy, rx, ry, rot), col, ol, 0.1);
+/** cuerpo con manchas recortadas dentro */
+const celSpots = (p: Pen, pts: P2[], col: string, spots: [number, number, number, number][], spot: string, ol = 11) =>
+  celPaint(p, pts, (lit) => {
+    const g = p.g; g.fillStyle = lit ? col : sombra(col); g.fillRect(-2000, -2000, 6000, 6000);
+    g.fillStyle = lit ? spot : sombra(spot); for (const [x, y, rx, ry] of spots) { p.path(EP(x, y, rx, ry), true); g.fill(); }
+  }, ol, 0.1);
+/** ojo v2: negro con brillo; asustado = con blanco alrededor; dormido = rayita */
+const eyeA = (p: Pen, x: number, y: number, r: number, mood?: AnimalOpts["mood"]) => {
+  if (mood === "sleep") { p.arc(x, y, r * 1.1, r * 0.7, 20, 160, r * 0.45); return; }
+  if (mood === "scared") p.ell(x, y, r * 1.5, r * 1.7, WHITE, r * 0.35);
+  p.ell(x, y, r * 0.72, r, INK, 0); p.ell(x - r * 0.25, y - r * 0.38, r * 0.27, r * 0.27, WHITE, 0);
+};
+/** ceja gruesa: inclinada hacia arriba por dentro si está asustado */
+const browA = (p: Pen, x: number, y: number, r: number, mood?: AnimalOpts["mood"]) => {
+  const up = mood === "scared" ? 1 : mood === "bark" ? -0.6 : 0;
+  p.stroke([[x - r * 1.1, y - r * 1.5 - up * r * 0.5], [x + r * 1.1, y - r * 1.5 + up * r * 0.5]], r * 0.55);
+};
+/** pata de palito con patita de color */
+const legA = (p: Pen, x: number, y0: number, dx: number, foot: string, w = 11) => {
+  p.stroke([[x, y0], [x + dx, 962]], w); cel(p, EP(x + dx + 8, 964, 22, 11), foot, 6, 0.05);
+};
+const swing = (ph: number | undefined, k = 30) => (ph === undefined ? 0 : Math.sin(ph * Math.PI * 2) * k);
 export const dog = (p: Pen, o: AnimalOpts) => {
-  const y = 780, ph = o.walk;
-  legs4(p, 150, 360, y, ph, 190, 12);
-  p.stroke([[140, y], [420, y - 10]], 22); // body
-  const wag = ph === undefined ? 0 : Math.sin(ph * 12.6) * 20;
-  p.stroke([[140, y], [100 + wag, y - 80]], 11);
-  const hx = 470, hy = y - (o.mood === "howl" ? 150 : 90);
-  p.ell(hx, hy, 72, 64, o.coat, 11);
-  if (o.spot) p.ell(hx - 20, hy - 18, 26, 22, o.spot, 0);
-  p.ell(hx - 40, hy - 10, 26, 50, o.spot ?? "#6b4a2a", 8, 0, 360, 15); // ear
-  p.dot(hx + 70, hy + (o.mood === "howl" ? -20 : 6), 13); // nose
-  if (o.mood === "sleep") p.arc(hx + 22, hy - 12, 16, 10, 20, 160, 7); else p.dot(hx + 22, hy - 16, o.mood === "scared" ? 8 : 11);
-  if (o.mood === "scared") p.ell(hx + 22, hy - 16, 18, 20, null, 6);
-  if (o.mood === "bark" || o.mood === "howl") p.ell(hx + 46, hy + 34, 18, 14, MOUTH, 6);
-  else p.arc(hx + 40, hy + 26, 20, 12, 20, 160, 7);
-  p.poly([[440, y - 50], [500, y - 40], [500, y - 26], [440, y - 34]], "#d84a3a", 5); // collar
+  const a = swing(o.walk), coat = o.coat, dark = o.spot ?? shade(coat, 0.6);
+  const wag = o.walk === undefined ? 0 : Math.sin(o.walk * 12.6) * 18;
+  p.line([[140, 740], [110, 690], [96 + wag, 630]], coat, 20);
+  for (const [x, s] of [[170, 1], [215, -1], [360, -1], [405, 1]] as const) legA(p, x, 800, a * s, sombra(coat, 0.85));
+  celSpots(p, EP(290, 752, 170, 78), coat, o.spot ? [[220, 720, 60, 44], [340, 780, 40, 30]] : [], dark);
+  cel(p, [[434, 686], [500, 704], [496, 730], [430, 716]], "#d84a3a", 5, 0.05); // collar
+  const hx = 486, hy = o.mood === "howl" ? 570 : 640;
+  celE(p, hx, hy, 76, 68, coat);
+  celE(p, hx + 60, hy + 24, 46, 32, mix(coat, "#ffffff", 0.35), 9);
+  p.ell(hx + 100, hy + (o.mood === "howl" ? 4 : 14), 15, 12, INK, 0);
+  eyeA(p, hx + 18, hy - 14, 13, o.mood); if (o.mood !== "sleep") browA(p, hx + 18, hy - 14, 13, o.mood);
+  if (o.mood === "bark" || o.mood === "howl") p.ell(hx + 70, hy + 46, 18, 14, MOUTH, 6);
+  else if (o.mood === "scared") p.arc(hx + 64, hy + 52, 16, 9, 200, 340, 6);
+  else p.arc(hx + 62, hy + 38, 18, 11, 20, 160, 6);
+  celE(p, hx - 34, hy + 4, 24, 52, dark, 8, 12); // oreja caída
 };
 export const cat = (p: Pen, o: AnimalOpts) => {
-  const y = 840, ph = o.walk;
-  legs4(p, 200, 340, y, ph, 130, 10);
-  p.stroke([[190, y], [380, y - 6]], 18);
-  const curl: P2[] = []; for (let i = 0; i <= 12; i++) { const t = i / 12; curl.push([190 - 40 * t - Math.sin(t * 5) * 20, y - 140 * t]); }
-  p.stroke(curl, 10);
-  const hx = 420, hy = y - 70, up = o.mood === "scared" ? -20 : 0;
-  p.poly([[hx - 50, hy - 30 + up], [hx - 40, hy - 95 + up], [hx - 10, hy - 50 + up]], o.coat, 8);
-  p.poly([[hx + 10, hy - 50 + up], [hx + 40, hy - 95 + up], [hx + 50, hy - 30 + up]], o.coat, 8);
-  p.ell(hx, hy + up, 58, 52, o.coat, 10);
-  for (const sx of [-1, 1]) { p.ell(hx + sx * 22, hy - 8 + up, 11, o.mood === "scared" ? 16 : 13, "#f3e06a", 5); p.ell(hx + sx * 22, hy - 8 + up, 3, 9, INK, 0); }
-  p.dot(hx, hy + 14 + up, 6, "#e86e78");
-  for (const sx of [-1, 1]) for (const dy of [-6, 8]) p.stroke([[hx + sx * 24, hy + 20 + up], [hx + sx * 80, hy + 14 + dy + up]], 3);
+  const a = swing(o.walk, 24), coat = o.coat, sc = o.mood === "scared";
+  const tail: P2[] = []; for (let i = 0; i <= 12; i++) { const t = i / 12; tail.push(sc ? [170 - 10 * t, 790 - 190 * t] : [170 - 40 * t - Math.sin(t * 5) * 22, 800 - 150 * t]); }
+  p.line(tail, coat, sc ? 22 : 16);
+  for (const [x, s] of [[200, 1], [236, -1], [330, -1], [366, 1]] as const) legA(p, x, 830, a * s, sombra(coat, 0.85), 10);
+  const up = sc ? -24 : 0;
+  celE(p, 286, 796 + up / 2, 128, 60, coat);
+  const hx = 420, hy = 726 + up;
+  for (const [x0, x1, x2] of [[hx - 52, hx - 40, hx - 8], [hx + 8, hx + 40, hx + 52]]) cel(p, [[x0, hy - 26], [x1, hy - (sc ? 80 : 96)], [x2, hy - 46]], coat, 8, 0.05);
+  celE(p, hx, hy, 60, 54, coat);
+  for (const sx of [-1, 1]) {
+    const ex = hx + sx * 22 + 6, ey = hy - 8;
+    if (o.mood === "sleep") { p.arc(ex, ey, 12, 7, 20, 160, 5); continue; }
+    p.ell(ex, ey, 11, sc ? 16 : 13, "#c8e85a", 5); p.ell(ex, ey, sc ? 6 : 3, 9, INK, 0); p.ell(ex - 3, ey - 5, 2.5, 2.5, WHITE, 0);
+  }
+  p.poly([[hx + 2, hy + 12], [hx + 14, hy + 12], [hx + 8, hy + 20]], "#e86e78", 3);
+  p.arc(hx + 2, hy + 24, 8, 6, 20, 160, 4); p.arc(hx + 16, hy + 24, 8, 6, 20, 160, 4);
+  for (const sx of [-1, 1]) for (const dy of [-6, 8]) p.stroke([[hx + 8 + sx * 26, hy + 18], [hx + 8 + sx * 78, hy + 12 + dy]], 3);
 };
 export const bird = (p: Pen, o: AnimalOpts & { fly?: boolean }) => {
-  const y = o.fly ? 700 : 900;
-  if (!o.fly) { p.stroke([[290, y + 30], [280, 972]], 6); p.stroke([[320, y + 30], [330, 972]], 6); }
-  p.ell(300, y, 70, 46, o.coat, 9);
-  p.ell(360, y - 46, 34, 32, o.coat, 8);
-  p.poly([[390, y - 50], [430, y - 42], [390, y - 36]], "#f2a03a", 5);
-  p.dot(368, y - 52, 7);
+  const y = o.fly ? 700 : 880;
+  if (!o.fly) { p.stroke([[290, y + 40], [282, 968]], 6, "#e8902a"); p.stroke([[322, y + 40], [330, 968]], 6, "#e8902a"); }
+  p.line([[240, y + 6], [196, y + 30]], o.coat, 22);
+  celE(p, 300, y, 72, 50, o.coat, 9);
+  celE(p, 362, y - 48, 38, 35, o.coat, 8);
+  cel(p, [[396, y - 56], [440, y - 46], [396, y - 36]], "#f2a03a", 5, 0.05);
+  eyeA(p, 372, y - 56, 8);
   const flap = o.fly ? Math.sin((o.walk ?? 0) * 6.28) * 60 : 0;
-  p.poly([[280, y - 10], [340, y - 10], [300, y - 70 - flap]], o.spot ?? "#8a8fa0", 7);
+  cel(p, [[268, y - 6], [340, y - 8], [300, y - 72 - flap]], o.spot ?? "#8a8fa0", 7, 0.05);
 };
 export const turtle = (p: Pen, o: AnimalOpts) => {
-  const y = 900, ph = o.walk ?? 0, a = Math.sin(ph * 6.28) * 14;
-  for (const [x, s] of [[230, 1], [360, -1]] as const) { p.ell(x + a * s, y + 40, 26, 18, "#7fbf6a", 6); }
-  p.ell(420, y + 4, 40, 30, "#7fbf6a", 7); p.dot(436, y - 2, 6);
-  p.ell(300, y + 10, 110, 70, o.coat, 9, 180, 360);
-  p.stroke([[190, y + 10], [410, y + 10]], 9);
-  for (const x of [250, 300, 350]) p.stroke([[x, y - 50], [x, y + 10]], 5, "#2e5a2a");
+  const y = 900, a = swing(o.walk, 14), skin = "#7fbf6a";
+  for (const [x, s] of [[230, 1], [360, -1]] as const) celE(p, x + a * s, y + 44, 28, 18, skin, 6);
+  celE(p, 420, y + 4, 42, 32, skin, 7); eyeA(p, 438, y - 4, 7);
+  p.arc(436, y + 16, 12, 6, 20, 160, 4);
+  celSpots(p, EP(300, y + 10, 112, 72).filter(([, yy]) => yy <= y + 10), o.coat, [[250, y - 26, 26, 18], [306, y - 40, 26, 18], [356, y - 22, 24, 16]], shade(o.coat, 0.78), 9);
+  p.stroke([[188, y + 10], [412, y + 10]], 9);
 };
 export const penguin = (p: Pen, o: AnimalOpts) => {
   const y = 760, a = o.walk === undefined ? 0 : Math.sin(o.walk * 6.28) * 0.08;
   p.g.save(); p.g.translate(300, 975); p.g.rotate(a); p.g.translate(-300, -975);
-  p.ell(300, y, 120, 190, "#20202a", 10);
-  p.ell(300, y + 30, 82, 150, "#ffffff", 0);
-  p.ell(300, y - 130, 80, 74, "#20202a", 0);
-  for (const sx of [-1, 1]) { p.ell(300 + sx * 28, y - 140, 16, 18, "#ffffff", 4); p.dot(300 + sx * 28, y - 138, 7); }
-  p.poly([[280, y - 112], [320, y - 112], [300, y - 86]], "#f2a03a", 5);
-  for (const sx of [-1, 1]) p.ell(300 + sx * 118, y + 10, 26, 90, "#20202a", 8, 0, 360, sx * -15);
-  for (const sx of [-1, 1]) p.ell(300 + sx * 46, 960, 40, 16, "#f2a03a", 6);
+  for (const sx of [-1, 1]) celE(p, 300 + sx * 46, 958, 40, 16, "#f2a03a", 6);
+  for (const sx of [-1, 1]) celE(p, 300 + sx * 116, y + 14, 26, 90, "#2b2b38", 8, sx * -15);
+  celPaint(p, EP(300, y, 120, 192), (lit) => {
+    const g = p.g; g.fillStyle = lit ? "#2b2b38" : "#1a1a24"; g.fillRect(-2000, -2000, 6000, 6000);
+    g.fillStyle = lit ? WHITE : "#dfe3ea"; p.path(EP(300, y + 34, 84, 150), true); g.fill();
+    for (const sx of [-1, 1]) { p.path(EP(300 + sx * 30, y - 136, 24, 26), true); g.fill(); }
+  }, 10, 0.1);
+  for (const sx of [-1, 1]) eyeA(p, 300 + sx * 28, y - 134, 9);
+  cel(p, [[278, y - 108], [322, y - 108], [300, y - 80]], "#f2a03a", 5, 0.05);
   p.g.restore();
 };
 
@@ -394,61 +428,57 @@ export const wave = (p: Pen, o: { t: number }) => {
 
 // ---------------- more animals + props (added for the multi-scene shorts) ----------------
 export const cow = (p: Pen, o: AnimalOpts) => {
-  const y = 640, ph = o.walk;
-  legs4(p, 150, 380, y + 60, ph, 270, 16);
-  p.ell(280, y, 200, 110, "#ffffff", 12);
-  for (const [x, yy, r] of [[220, y - 30, 50], [330, y + 30, 40], [380, y - 50, 30]]) p.ell(x, yy, r, r * 0.8, "#2a2a32", 0);
-  p.ell(280, y, 200, 110, null, 12);
-  p.stroke([[90, y - 20], [60, y + 120]], 10); p.ell(58, y + 132, 14, 20, "#2a2a32", 0);
+  const y = 640, a = swing(o.walk);
+  p.stroke([[86, y - 10], [60, y + 120]], 10); celE(p, 58, y + 134, 14, 20, "#2a2a32", 5);
+  for (const [x, s] of [[160, 1], [210, -1], [350, -1], [400, 1]] as const) { p.line([[x, y + 70], [x + a * s, 950]], "#ffffff", 24); celE(p, x + a * s, 952, 18, 16, "#2a2a32", 5); }
+  celSpots(p, EP(280, y, 200, 110), "#ffffff", [[220, y - 30, 56, 44], [330, y + 34, 44, 34], [384, y - 54, 34, 26], [150, y + 40, 30, 24]], "#2a2a32", 12);
   const hx = 500, hy = y - 70 - (o.mood === "scared" ? 20 : 0);
-  p.ell(hx, hy, 80, 70, "#ffffff", 11);
-  p.ell(hx + 30, hy + 40, 55, 36, "#f7b6c8", 9);
-  p.dot(hx + 14, hy + 40, 7); p.dot(hx + 46, hy + 40, 7);
-  p.dot(hx - 10, hy - 18, o.mood === "scared" ? 8 : 12);
-  for (const s of [-1, 1]) p.poly([[hx - 30 + s * 30, hy - 60], [hx - 20 + s * 40, hy - 110], [hx - 4 + s * 30, hy - 58]], "#f2e6c8", 6);
-  p.ell(hx - 70, hy - 30, 34, 16, "#ffffff", 8);
+  for (const s of [-1, 1]) cel(p, [[hx - 30 + s * 30, hy - 56], [hx - 20 + s * 40, hy - 112], [hx - 4 + s * 30, hy - 54]], "#f2e6c8", 6, 0.05);
+  celE(p, hx - 74, hy - 30, 36, 17, "#ffffff", 8, -10);
+  celE(p, hx, hy, 80, 70, "#ffffff", 11);
+  celE(p, hx + 32, hy + 40, 56, 36, "#f7b6c8", 9);
+  p.ell(hx + 16, hy + 40, 7, 9, INK, 0); p.ell(hx + 48, hy + 40, 7, 9, INK, 0);
+  eyeA(p, hx - 8, hy - 18, 13, o.mood); if (o.mood !== "sleep") browA(p, hx - 8, hy - 18, 13, o.mood);
 };
 export const chicken = (p: Pen, o: AnimalOpts) => {
-  const y = 860, ph = o.walk ?? 0, a = Math.sin(ph * 6.28) * 20;
-  p.stroke([[290, y + 40], [280 + a, 972]], 8, "#f2a03a"); p.stroke([[320, y + 40], [330 - a, 972]], 8, "#f2a03a");
-  p.ell(300, y, 80, 62, "#ffffff", 9);
-  p.poly([[230, y - 30], [190, y - 70], [200, y - 10]], "#ffffff", 7);
-  p.ell(370, y - 64, 40, 38, "#ffffff", 8);
-  p.poly([[402, y - 70], [440, y - 60], [402, y - 52]], "#f2a03a", 5);
-  p.poly([[355, y - 100], [368, y - 124], [380, y - 102], [392, y - 122], [398, y - 96]], "#e62117", 5);
-  p.ell(398, y - 40, 10, 14, "#e62117", 4);
-  p.dot(378, y - 70, o.mood === "scared" ? 5 : 7);
+  const y = 860, a = swing(o.walk, 20);
+  p.stroke([[290, y + 40], [280 + a, 970]], 8, "#f2a03a"); p.stroke([[320, y + 40], [330 - a, 970]], 8, "#f2a03a");
+  cel(p, [[232, y - 26], [184, y - 78], [196, y - 4]], "#ffffff", 7, 0.05);
+  celE(p, 300, y, 82, 62, "#ffffff", 9);
+  cel(p, [[262, y - 10], [330, y - 14], [312, y + 34], [270, y + 28]], "#eef0f4", 6, 0.05); // ala
+  cel(p, [[355, y - 98], [368, y - 126], [380, y - 102], [392, y - 124], [400, y - 94]], "#e62117", 5, 0.05);
+  celE(p, 370, y - 64, 40, 38, "#ffffff", 8);
+  cel(p, [[402, y - 72], [442, y - 60], [402, y - 50]], "#f2a03a", 5, 0.05);
+  celE(p, 400, y - 38, 10, 14, "#e62117", 4);
+  eyeA(p, 380, y - 70, 8, o.mood === "scared" ? "scared" : undefined);
 };
 export const pig = (p: Pen, o: AnimalOpts) => {
-  const y = 820;
-  legs4(p, 200, 350, y + 40, o.walk, 110, 13);
-  p.ell(290, y, 150, 90, "#f7a8c0", 11);
-  const curl: P2[] = []; for (let i = 0; i <= 10; i++) curl.push([140 - i * 4, y - 20 - Math.sin(i * 0.9) * 16]); p.stroke(curl, 7);
-  p.ell(430, y - 20, 66, 58, "#f7a8c0", 10);
-  p.ell(480, y - 6, 26, 20, "#f48aa8", 7); p.dot(474, y - 6, 4); p.dot(488, y - 6, 4);
-  p.dot(440, y - 40, 9);
-  p.poly([[400, y - 70], [420, y - 110], [440, y - 70]], "#f48aa8", 6);
+  const y = 820, a = swing(o.walk), pink = "#f7a8c0";
+  const curl: P2[] = []; for (let i = 0; i <= 10; i++) curl.push([142 - i * 4, y - 20 - Math.sin(i * 0.9) * 16]); p.stroke(curl, 7);
+  for (const [x, s] of [[200, 1], [240, -1], [340, -1], [380, 1]] as const) { p.line([[x, y + 40], [x + a * s * 0.6, 950]], pink, 26); celE(p, x + a * s * 0.6, 954, 16, 12, "#8a5a4a", 5); }
+  celE(p, 290, y, 152, 92, pink, 11);
+  celE(p, 430, y - 22, 68, 60, pink, 10);
+  cel(p, [[398, y - 70], [420, y - 116], [444, y - 72]], "#f48aa8", 6, 0.05);
+  celE(p, 482, y - 8, 28, 22, "#f48aa8", 7); p.ell(474, y - 8, 4, 6, INK, 0); p.ell(490, y - 8, 4, 6, INK, 0);
+  eyeA(p, 444, y - 42, 10, o.mood); p.arc(452, y + 18, 14, 8, 20, 160, 5);
 };
 export const fishCard = (p: Pen, o: AnimalOpts) => {
   const y = 500;
-  p.ell(280, y, 170, 100, o.coat, 11);
-  if (o.spot) for (const x of [220, 290]) p.poly([[x, y - 96], [x + 30, y - 96], [x + 20, y + 96], [x - 10, y + 96]], o.spot, 0);
-  p.ell(280, y, 170, 100, null, 11);
-  p.poly([[440, y], [560, y - 90], [560, y + 90]], o.coat, 10);
-  p.poly([[260, y - 90], [320, y - 160], [340, y - 92]], o.coat, 8);
-  p.ell(180, y - 20, 28, 28, "#ffffff", 7); p.dot(172, y - 20, 13);
-  p.arc(150, y + 30, 20, 12, 20, 160, 6);
+  cel(p, [[440, y], [560, y - 92], [560, y + 92]], o.coat, 10, 0.05);
+  cel(p, [[258, y - 92], [320, y - 162], [342, y - 94]], o.coat, 8, 0.05);
+  celSpots(p, EP(280, y, 172, 102), o.coat, o.spot ? [[234, y, 16, 110], [304, y, 16, 110]] : [], o.spot ?? o.coat, 11);
+  p.ell(180, y - 20, 28, 28, WHITE, 7); eyeA(p, 174, y - 20, 14);
+  p.arc(146, y + 30, 20, 12, 20, 160, 6);
 };
 export const beetle = (p: Pen, o: AnimalOpts) => {
-  const y = 900, a = Math.sin((o.walk ?? 0) * 6.28) * 14;
+  const y = 900, a = swing(o.walk, 14);
   for (const [x, s] of [[230, 1], [300, -1], [370, 1]] as const) { p.stroke([[x, y], [x - 30 + a * s, 972]], 6); p.stroke([[x, y], [x + 30 - a * s, 972]], 6); }
-  p.ell(300, y - 20, 110, 70, o.coat, 9);
-  p.stroke([[300, y - 88], [300, y + 48]], 5);
-  p.ell(420, y - 10, 36, 30, "#2a2a32", 7);
+  celE(p, 150, y + 10, 64, 62, "#8a5a34", 8); // su bola
+  celE(p, 300, y - 20, 112, 72, o.coat, 9);
+  p.stroke([[300, y - 90], [300, y + 50]], 5);
+  p.ell(260, y - 48, 26, 12, "rgba(255,255,255,0.55)", 0);
+  celE(p, 420, y - 10, 38, 32, "#2a2a32", 7); eyeA(p, 432, y - 18, 6);
   p.stroke([[440, y - 34], [470, y - 70]], 5); p.stroke([[450, y - 26], [490, y - 50]], 5);
-  p.ell(260, y - 46, 24, 12, "rgba(255,255,255,0.5)", 0);
-  // its dung ball
-  p.ell(150, y + 10, 64, 62, "#8a5a34", 8);
 };
 export const spinTop = (p: Pen, o: { col: string; t: number; tilt: number }) => {
   p.g.save(); p.g.translate(300, 960); p.g.rotate(o.tilt); p.g.translate(-300, -960);

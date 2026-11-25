@@ -5,7 +5,7 @@ import { APAGON } from "./videos/apagon";
 import { LUNA } from "./videos/luna";
 import { ROTACION } from "./videos/rotacion";
 import { OUTRO } from "./videos/outro";
-import { FichaSticky, FichaElenco } from "./videos/ficha";
+import { FichaSticky, FichaElenco, FichaAnimales } from "./videos/ficha";
 const Apagon = makeShort(APAGON);
 const Luna = makeShort(LUNA);
 const Rotacion = makeShort(ROTACION);
@@ -18,5 +18,6 @@ export const Root: React.FC = () => (
     <Composition id="Outro" component={Outro} durationInFrames={OUTRO.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="FichaSticky" component={FichaSticky} durationInFrames={1} fps={30} width={1800} height={3200} />
     <Composition id="FichaElenco" component={FichaElenco} durationInFrames={1} fps={30} width={2400} height={3240} />
+    <Composition id="FichaAnimales" component={FichaAnimales} durationInFrames={1} fps={30} width={2400} height={3240} />
   </>
 );
