@@ -9,7 +9,9 @@ Este repositorio hace los shorts animados del canal **Curiosidades con Sticky**.
 - Sticky es el protagonista: cabeza blanca, cuerpo blanco y **bufanda azul**. Nada lo tapa.
 - Usa el elenco fijo de `shorts-sticky/src/engine/elenco.ts`. Nunca redefinas personajes dentro de un video.
 - Todo debe salir con la calidad de `BIBLIA/CALIDAD.md`, con su lista de revisión.
-- La voz es edge-tts `es-MX-JorgeNeural` a `+24%`, con subtítulos quemados palabra por palabra.
+- **SIEMPRE CON SUBTÍTULOS.** Ningún video ni clip de prueba se entrega sin subtítulos quemados palabra por palabra
+  (`python -I subtitulos.py voz/<video>/palabras.json <entrada.mp4> <salida.mp4>`, ya incluido en `RENDERIZAR.bat`).
+- La voz es edge-tts `es-MX-JorgeNeural` a `+24%` (narrador en español).
 - Cada video termina con el cierre de "suscríbete y comenta" y va en su carpeta con su `PUBLICAR.txt`.
 - La historia lleva `voz:` (las palabras de `palabras.json`) para que Sticky mueva la boca.
 - No subas `.mp4`, `.wav`, `node_modules` ni `out/`. Al terminar, corre `SINCRONIZAR.bat` o haz `git pull --rebase`, commit y push.
