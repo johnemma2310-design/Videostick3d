@@ -78,30 +78,97 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
 
 // ---------------- Sticky (the lead) ----------------
 export type StickyOpts = { expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number };
-export const stickyHand = (o: StickyOpts): P2 => (o.arm === "up" ? [395 + 25 * Math.cos(o.ang ?? 0), 300 + 12 * Math.sin(o.ang ?? 0)] : rightArm(o.arm ?? "down", [300, 548], 1, 0)[1]);
+// Sticky v2 (nov 2026): head ovalada blanca con sombra gris de un lado, cejas gruesas expresivas, ojitos negros,
+// torso en cápsula blanca con contorno grueso, brazos y piernas de palito, y su bufanda azul anudada al cuello.
+const SH_L: P2 = [234, 572], SH_R: P2 = [366, 572], SHADE = "#dfe3ea", BLUE = "#2f86d6", BLUE_D = "#1f5f9e";
+export const stickyHand = (o: StickyOpts): P2 => (o.arm === "up" ? [395 + 25 * Math.cos(o.ang ?? 0), 300 + 12 * Math.sin(o.ang ?? 0)] : rightArm(o.arm ?? "down", SH_R, 1, 0)[1]);
+/** cara expresiva de Sticky: cejas gruesas, ojitos negros con brillo, boca grande */
+const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0], blink = 0) => {
+  const shock = expr === "shock" || expr === "scream";
+  const closed = expr === "happy" || expr === "relief" || expr === "sleep" || (expr === "smile" && blink > 0.5);
+  const lx = look[0] * 9, ly = look[1] * 9;
+  for (const sx of [-1, 1]) {
+    const ex = cx + sx * 48, ey = cy - 14;
+    if (closed) p.arc(ex, ey + 8, 22, 15, expr === "sleep" ? 20 : 200, expr === "sleep" ? 160 : 340, 9);
+    else if (expr === "frozen") p.stroke([[ex - 16, ey], [ex + 16, ey]], 9);
+    else {
+      const rx = shock ? 15 : 12, ry = (shock ? 20 : 17) * (1 - 0.88 * blink);
+      if (shock) p.ell(ex + lx, ey + ly, rx + 10, 30, WHITE, 6);
+      p.ell(ex + lx, ey + ly, rx, Math.max(ry, 2.5), INK, 0);
+      if (blink < 0.5) p.ell(ex + lx - 4, ey + ly - 6, 4.5, 4.5, WHITE, 0);
+    }
+    // ceja: cuña gruesa (más gruesa por dentro); la altura de cada punta da la emoción
+    let yi = -44, ym = -50, yo = -48;
+    switch (expr) {
+      case "shock": case "scream": yi = -72; ym = -80; yo = -70; break;
+      case "sad": case "worried": case "shiver": case "frozen": yi = -64; ym = -56; yo = -42; break;
+      case "smile": case "happy": case "relief": case "lick": yi = -56; ym = -64; yo = -56; break;
+      case "sleep": yi = -40; ym = -42; yo = -40; break;
+      default: yi = -40; ym = -48; yo = -50; // neutral: algo serio, como el estilo de referencia
+    }
+    const xi = ex - sx * 26, xm = ex, xo = ex + sx * 28;
+    p.poly([[xi, ey + yi - 9], [xm, ey + ym - 8], [xo, ey + yo - 5], [xo, ey + yo + 4], [xm, ey + ym + 7], [xi, ey + yi + 10]], INK, 5);
+  }
+  const mx = cx + 4, my = cy + 64;
+  switch (expr) {
+    case "smile": p.arc(mx, my - 18, 38, 22, 20, 160, 9); break;
+    case "happy": case "relief": p.ell(mx, my - 12, 44, 38, MOUTH, 8, 0, 180); p.ell(mx + 6, my + 14, 18, 9, "#e86e78", 0); break;
+    case "lick": p.arc(mx, my - 18, 36, 20, 20, 160, 9); p.ell(mx + 24, my + 6, 12, 15, "#e86e78", 6); break;
+    case "shock": p.ell(mx, my + 2, 20, 26, MOUTH, 8); break;
+    case "scream": p.ell(mx, my + 8, 34, 44, MOUTH, 8); p.ell(mx, my + 30, 18, 10, "#e86e78", 0); break;
+    case "sad": case "worried": p.arc(mx, my + 16, 30, 16, 200, 340, 9); break;
+    case "sleep": p.stroke([[mx - 14, my], [mx + 14, my]], 8); break;
+    case "neutral": p.stroke([[mx - 22, my + 2], [mx + 4, my], [mx + 22, my - 3]], 8); break;
+    case "shiver": case "frozen": {
+      const pts: P2[] = []; for (let i = 0; i <= 8; i++) pts.push([mx - 36 + i * 9, my + (i % 2 ? 7 : -7)]);
+      p.poly([[mx - 40, my - 13], [mx + 40, my - 13], [mx + 40, my + 13], [mx - 40, my + 13]], WHITE, 7); p.stroke(pts, 5);
+    }
+  }
+};
+/** cápsula (torso) de x0..x1, y0..y1 */
+const capsule = (x0: number, x1: number, y0: number, y1: number): P2[] => {
+  const cx = (x0 + x1) / 2, rx = (x1 - x0) / 2, ry = Math.min(rx, (y1 - y0) / 2);
+  const pts: P2[] = [];
+  for (let a = 180; a <= 360; a += 10) pts.push([cx + rx * Math.cos((a * Math.PI) / 180), y0 + ry + ry * Math.sin((a * Math.PI) / 180)]);
+  for (let a = 0; a <= 180; a += 10) pts.push([cx + rx * Math.cos((a * Math.PI) / 180), y1 - ry + ry * Math.sin((a * Math.PI) / 180)]);
+  return pts;
+};
 export const sticky = (p: Pen, o: StickyOpts) => {
-  const lw = 14, ph = (o.scarf ?? 0) * Math.PI * 2, wk = o.walk;
-  const HIP: P2 = [300, 740], NECK: P2 = [300, 482], SHO: P2 = [300, 548];
-  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 55, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
+  const lw = 13, ph = (o.scarf ?? 0) * Math.PI * 2, wk = o.walk;
+  const legA = wk === undefined ? 0 : Math.sin(wk * Math.PI * 2) * 50, bob = wk === undefined ? 0 : Math.abs(Math.cos(wk * Math.PI * 2)) * 8;
   p.g.save(); p.g.translate(0, -bob);
-  p.stroke([HIP, [242 + legA, 968 + bob]], lw); p.stroke([HIP, [358 - legA, 968 + bob]], lw);
-  p.ell(232 + legA, 970 + bob, 30, 12, INK, 0); p.ell(368 - legA, 970 + bob, 30, 12, INK, 0);
-  p.stroke([NECK, HIP], lw);
+  // piernas de palito y zapatitos
+  p.stroke([[274, 750], [252 + legA, 966 + bob]], lw); p.stroke([[326, 750], [348 - legA, 966 + bob]], lw);
+  p.ell(248 + legA, 968 + bob, 28, 13, INK, 0); p.ell(352 - legA, 968 + bob, 28, 13, INK, 0);
+  // cuello + torso en cápsula blanca con sombra a la derecha
+  p.stroke([[300, 450], [300, 520]], lw);
+  p.poly(capsule(222, 378, 496, 772), WHITE, 0);
+  p.poly(capsule(300, 378, 510, 760).map(([x, y]) => [Math.max(x, 350), y] as P2), SHADE, 0);
+  p.poly(capsule(222, 378, 496, 772), null, 13);
+  // cola de la bufanda que ondea (detrás de los brazos)
+  const tail: P2[] = [[322, 508]];
+  for (let i = 1; i <= 6; i++) tail.push([322 + i * 13 + Math.sin(ph + i * 0.8) * 9 * (i / 6), 508 + i * 24]);
+  p.poly([...tail.map(([x, y]) => [x - 17, y] as P2), ...tail.slice().reverse().map(([x, y]) => [x + 17, y + 4] as P2)], BLUE, 8);
+  p.stroke([[322 + 6 * 13 - 14, 508 + 6 * 24 - 2], [322 + 6 * 13 + 14, 508 + 6 * 24 + 2]], 4, BLUE_D);
+  // brazos de palito
   const arm = o.arm ?? "down";
-  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" ? armPose(arm, SHO, -1, wk ?? 0, 1) : armPose("down", SHO, -1, wk ?? 0, 1);
-  p.stroke([SHO, le, lh], lw); p.dot(lh[0], lh[1], 12);
+  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" ? armPose(arm, SH_L, -1, wk ?? 0, 1) : armPose("down", SH_L, -1, wk ?? 0, 1);
+  p.stroke([SH_L, le, lh], lw); p.dot(lh[0], lh[1], 13);
   let re: P2, rh: P2;
-  if (arm === "up") { rh = stickyHand(o); re = [380, 430]; } else [re, rh] = rightArm(arm, SHO, 1, wk ?? 0);
-  p.stroke([SHO, re, rh], lw);
-  const tail: P2[] = [[318, 492]];
-  for (let i = 1; i <= 6; i++) tail.push([318 + i * 14 + Math.sin(ph + i * 0.8) * 8 * (i / 6), 492 + i * 26]);
-  p.poly([...tail.map(([x, y]) => [x - 18, y] as P2), ...tail.slice().reverse().map(([x, y]) => [x + 18, y + 4] as P2)], "#2f86d6", 8);
-  p.poly([[218, 462], [384, 462], [392, 512], [210, 512]], "#2f86d6", 9);
-  p.stroke([[226, 488], [376, 488]], 5, "#1f5f9e");
-  p.ell(300, 330, 150, 144, WHITE, 15);
-  p.arc(325, 360, 129, 120, 10, 120, 10, "#d8dde8");
-  face(p, 300, 330, 150, o.expr, o.look, o.blink ?? 0);
-  if (arm !== "up" && arm !== "down") held(p, arm, rh, 1); else p.dot(rh[0], rh[1], 12);
+  if (arm === "up") { rh = stickyHand(o); re = [392, 440]; } else [re, rh] = rightArm(arm, SH_R, 1, wk ?? 0);
+  p.stroke([SH_R, re, rh], lw);
+  // cabeza ovalada blanca con sombra gris (lado derecho y abajo)
+  p.ell(300, 292, 150, 162, SHADE, 0);
+  p.ell(288, 280, 136, 150, WHITE, 0);
+  p.ell(300, 292, 150, 162, null, 14);
+  browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0);
+  // bufanda: vuelta al cuello + nudo + punta corta al frente
+  p.ell(300, 490, 78, 30, BLUE, 9);
+  p.arc(300, 478, 66, 20, 20, 160, 5, BLUE_D);
+  p.poly([[276, 500], [304, 504], [296, 600], [264, 592]], BLUE, 8);
+  p.stroke([[268, 582], [298, 588]], 4, BLUE_D);
+  p.ell(286, 506, 22, 18, BLUE, 8);
+  if (arm !== "up" && arm !== "down") held(p, arm, rh, 1); else p.dot(rh[0], rh[1], 13);
   p.g.restore();
 };
 

@@ -12,13 +12,22 @@ Todos son **stickman 2D** (tarjetas dibujadas) dentro de un mundo 3D de colores:
 
 ## Sticky, el protagonista
 
+![Ficha de Sticky](fotos/sticky_ficha.jpg)
+
+Diseño v2 (nov 2026), en el estilo de los personajes de los shorts de referencia, pero **todo blanco y con su bufanda azul**:
+
 | Rasgo | Valor |
 |---|---|
-| Cabeza | Blanca, muy grande, con sombra gris abajo a la derecha |
-| Seña | **Bufanda azul `#2f86d6`** que ondea (1.3 Hz, 8 pasos) |
+| Cabeza | Ovalada, blanca, grande, con sombra gris suave a la derecha y abajo |
+| Cara | **Cejas negras gruesas** que dan la emoción, ojitos negros con brillo y boca expresiva |
+| Cuerpo | Torso en **cápsula blanca** con contorno grueso; brazos y piernas de palito; zapatitos negros |
+| Seña | **Bufanda azul `#2f86d6`** enrollada al cuello, con nudo, punta al frente y una cola que ondea (1.3 Hz, 8 pasos) |
 | Escala | `ESCALA.sticky = 0.75` |
 | Voz | El narrador (`es-MX-JorgeNeural`, +24 %) |
 | Reglas | Sale en casi todas las escenas, siempre en primer plano, y **nunca hay nada entre la cámara y él** (`blocksLead`) |
+
+El dibujo está en `sticky()` de `shorts-sticky/src/engine/stick.ts`. Para ver la ficha usa la composición `FichaSticky`:
+`node scripts/fotos.mjs FichaSticky out/ficha_ 0 0.5`.
 
 Expresiones (`expr`): `neutral smile lick shock sad scream happy worried shiver frozen relief sleep`.
 Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug cover`.
