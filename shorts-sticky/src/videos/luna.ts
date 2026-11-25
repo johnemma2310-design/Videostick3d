@@ -11,6 +11,7 @@ import { BEACH_X } from "../engine/world";
 import { ORIGIN } from "../engine/sets";
 import { band, mirrorFor } from "../engine/crowd";
 import type { Expr, Arm, PersonOpts } from "../engine/stick";
+import { FARMER } from "../engine/elenco";
 
 const TOTAL = 1647, BX = BEACH_X, GONE = 30;
 const FA = ORIGIN.farm, RF = ORIGIN.reef, DS = ORIGIN.desert, CL = ORIGIN.classroom, HO = ORIGIN.house;
@@ -53,7 +54,6 @@ const scarf = (f: number) => Math.floor(((f / 30) * 1.3 % 1) * 8) / 8;
 const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: [number, number] = [0, 0]): Card =>
   ({ kind: "sticky", o: { expr, arm, look, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: scarf(f) }, x: pos[0], y: pos[1] || undefined, z: pos[2], s: 0.75 });
 const who = (o: PersonOpts, pos: V3, s = 0.74): Card => ({ kind: "person", o, x: pos[0], z: pos[2], s });
-const FARMER: PersonOpts = { expr: "worried", hat: "cowboy", hatCol: "#b97d4a", stache: "thick", beard: "#7a5236", arm: "candle" };
 
 const farmAnimals = (f: number, scared: boolean, c: { pos: V3; look: V3 }): Card[] => {
   const out: Card[] = [];

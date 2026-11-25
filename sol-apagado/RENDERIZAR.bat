@@ -8,7 +8,8 @@ where ffmpeg >nul 2>&1 || (echo Falta ffmpeg. & goto fin)
 where python >nul 2>&1 || (echo Falta Python 3. & goto fin)
 if not exist node_modules (echo Instalando dependencias... & call npm install || goto error)
 if not exist out mkdir out
-if not exist publicoz.wav (echo Falta publicoz.wav: corre python -I voz/tts.py dentro de voz y conviertelo. & goto fin)
+if not exist public mkdir public
+ffmpeg -v error -y -i voz/voz.mp3 -ar 48000 -ac 1 public/voz.wav || goto error
 echo [1/4] Animacion (puede tardar varios minutos)...
 call npx remotion render src/index.ts SolApagado out/video_mudo.mp4 --codec h264 --crf 18 --gl=angle --concurrency=3 --timeout=240000 || goto error
 echo [2/4] Sonido...

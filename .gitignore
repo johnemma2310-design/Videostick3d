@@ -1,6 +1,17 @@
+# Se regeneran (no subir)
 node_modules/
 out/
 *.mp4
 *.wav
 *.mov
 public/*.wav
+
+# Skill original de LuisPa (se baja de su propio repo; su historial queda en la rama luispa-original)
+SKILL.md
+LICENSE
+LEEME-LuisPa.md
+plantillas/
+ejemplos/
+herramientas/
+realista/
+referencias/

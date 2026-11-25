@@ -1,0 +1,72 @@
+# Personajes de Curiosidades con Sticky
+
+Todo el elenco fijo vive en el código, en **`shorts-sticky/src/engine/elenco.ts`**. Para que un personaje se vea igual en todos los videos, impórtalo desde ahí:
+
+```ts
+import { sticky, who, MAMA, PAPA, NINO, ABUELA, ESCALA } from "../engine/elenco";
+```
+
+No redefinas un personaje dentro de un video. Si necesitas uno nuevo, agrégalo en `elenco.ts` y apúntalo en esta tabla.
+
+Todos son **stickman 2D** (tarjetas dibujadas) dentro de un mundo 3D de colores: cuerpo de palito negro, cabeza blanca redonda y ojos grandes.
+
+## Sticky, el protagonista
+
+| Rasgo | Valor |
+|---|---|
+| Cabeza | Blanca, muy grande, con sombra gris abajo a la derecha |
+| Seña | **Bufanda azul `#2f86d6`** que ondea (1.3 Hz, 8 pasos) |
+| Escala | `ESCALA.sticky = 0.75` |
+| Voz | El narrador (`es-MX-JorgeNeural`, +24 %) |
+| Reglas | Sale en casi todas las escenas, siempre en primer plano, y **nunca hay nada entre la cámara y él** (`blocksLead`) |
+
+Expresiones (`expr`): `neutral smile lick shock sad scream happy worried shiver frozen relief sleep`.
+Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug cover`.
+
+## Elenco fijo
+
+| Constante | Quién | Cómo se ve | Dónde sale |
+|---|---|---|---|
+| `MAMA` (`MOM`) | Mamá | Coleta rosa `#ff6fa3` | Casa, cocina |
+| `PAPA` (`DAD`) | Papá | Bigote grueso, lentes, corbata azul | Casa, ascensor |
+| `NINO` (`KID`) | El niño | Gorra amarilla, escala `0.54` | Casa, parque |
+| `ABUELA` (`GRANNY`) | La abuela | Moño morado, lentes, bastón | Cocina |
+| `GRANJERO` (`FARMER`) | El granjero | Sombrero vaquero, bigote y barba | Granja |
+| `CIENTIFICA` | La científica | Coleta morada, lentes | Observatorio, aula |
+| `PROFE` | El profe | Bigote rizado, lentes, corbata roja | Aula |
+| `DOCTORA` | La doctora | Gorro blanco, lentes, bolso rojo | Hospital |
+| `TENDERO` | El tendero | Gorra verde, bigote fino | Tienda |
+| `OBRERO` | El obrero | Casco amarillo, barba | Calle |
+| `SENOR` | El señor elegante | Sombrero de copa, bigote rizado, bastón | Calle, parque |
+| `TOBY` | El perro de la familia | Café con mancha oscura | Casa, parque |
+| `MICHI` | La gata de la familia | Gris | Casa |
+
+## Extras (gente de fondo)
+
+Los extras salen de `extra(i, seed)` en `crowd.ts`. Con la misma semilla siempre sale la misma gente.
+
+- **Mezcla:** 62 % adultos, 12 % niños, 12 % perros, 9 % gatos y 5 % pájaros.
+- **Gorros:** gorra, sombrero de copa, bombín, gorro de lana, vaquero, moño, pelo parado, coleta, casco o gorro de chef.
+- **Detalles:** 35 % de los adultos llevan bigote (grueso, rizado o fino). También hay barba, lentes, corbata, bolso y bastón.
+- **Colocación:** usa `band({...})` para poner un grupo en un rectángulo. Esquiva solo el pasillo entre la cámara y Sticky.
+- **Regla:** no todos salen en todas las escenas. Pon de 2 a 6 personajes por escena interior y una multitud solo en la calle o el parque.
+
+## Animales y cosas que son tarjetas
+
+| `kind` | Qué es |
+|---|---|
+| `dog` `cat` `bird` | Mascotas y pájaros. `mood` puede ser `calm`, `scared`, `howl`, `sleep` o `bark` |
+| `cow` `chicken` `pig` | Animales de granja |
+| `turtle` `penguin` `fish` `beetle` | Playa, polo, arrecife y desierto |
+| `car` | Coche (tarjeta ancha). Con `lights` lleva los faros encendidos |
+| `plane` | Avión (tarjeta ancha) |
+| `wave` | Ola gigante (tarjeta ancha) |
+| `top` | Trompo girando (para explicar el bamboleo de la Tierra) |
+
+## Agregar un personaje nuevo
+
+1. Agrega la constante en `elenco.ts` con un comentario que diga cómo se ve.
+2. Agrega su fila en la tabla de arriba.
+3. Si necesita un dibujo nuevo (otro `kind`), créalo en `stick.ts` y después en `types.ts` y en el bucle de tarjetas de `world.ts`.
+4. Revisa cómo queda con `node scripts/fotos.mjs <Comp> prueba <frames>` antes de renderizar.
+5. Sube los cambios (ver [SINCRONIZAR.md](SINCRONIZAR.md)).

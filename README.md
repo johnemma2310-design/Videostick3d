@@ -8,11 +8,22 @@ Lee primero **[CONTEXTO_CLAUDE.md](CONTEXTO_CLAUDE.md)**: tiene las reglas del c
 | `sol-apagado/` | Short «¿Y si el Sol se apaga?» (motor anterior) |
 | `alejandro-victoria/` | Primer short (Alejandro en Gaugamela), sin voz |
 
-No incluye videos, `node_modules` ni renders. Para empezar en otra PC:
+Todo lo demás (personajes, escenarios, estándar de calidad, cómo sincronizar y el registro de videos) está en **[BIBLIA/](BIBLIA/)**.
+El elenco fijo vive en código, en `shorts-sticky/src/engine/elenco.ts`.
+
+| Archivo | Para qué |
+|---|---|
+| `SINCRONIZAR.bat` | Baja lo último de GitHub y sube tus cambios (doble clic al empezar y al terminar) |
+| `shorts-sticky/RENDERIZAR.bat <video>` | Render completo (`apagon`, `luna` o `rotacion`), con voz, subtítulos y cierre, que queda en la carpeta del video |
+| `<Título del video>/PUBLICAR.txt` | Título, descripción, hashtags y tags de cada video |
+
+No se suben los videos (`.mp4`), los `.wav`, `node_modules` ni `out/`: se regeneran con `RENDERIZAR.bat`.
+
+Primera vez en otra PC:
 ```
-cd shorts-sticky
+git clone https://github.com/johnemma2310-design/Videostick3d.git "STICK 3D"
+cd "STICK 3D/shorts-sticky"
 npm install
-for v in apagon luna rotacion outro: ffmpeg -i voz/<v>/voz.mp3 -ar 48000 -ac 1 public/voz_<v>.wav
-npx remotion render src/index.ts Outro out/outro_mudo.mp4 --gl=angle   (luego mezcla + subtítulos → out/outro_final.mp4)
+pip install edge-tts numpy
 ```
 La skill original de LuisPa (SKILL.md y referencias) está en https://github.com/luispablovillasenor-afk/shorts-animados-claude

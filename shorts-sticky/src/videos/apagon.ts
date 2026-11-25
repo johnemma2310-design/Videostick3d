@@ -10,6 +10,7 @@ import { STREET_X } from "../engine/world";
 import { ORIGIN } from "../engine/sets";
 import { band, mirrorFor } from "../engine/crowd";
 import type { Expr, Arm, PersonOpts } from "../engine/stick";
+import { MOM, DAD, KID, GRANNY } from "../engine/elenco";
 
 const TOTAL = 1753, X = STREET_X, OFF = 168;
 const H = ORIGIN.house, E = ORIGIN.elevator, P = ORIGIN.hospital, S = ORIGIN.store, D = ORIGIN.desert;
@@ -54,10 +55,6 @@ const scarf = (f: number) => Math.floor(((f / 30) * 1.3 % 1) * 8) / 8;
 const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: [number, number] = [0, 0]): Card =>
   ({ kind: "sticky", o: { expr, arm, look, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: scarf(f) }, x: pos[0], z: pos[2], s: 0.75 });
 const who = (o: PersonOpts, pos: V3, s = 0.74, extra: Partial<Card> = {}): Card => ({ kind: "person", o, x: pos[0], z: pos[2], y: pos[1] || undefined, s, ...extra } as Card);
-const MOM: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#ff6fa3" };
-const DAD: PersonOpts = { expr: "smile", hat: "none", stache: "thick", glasses: true, tie: "#2f86d6" };
-const KID: PersonOpts = { expr: "happy", hat: "cap", hatCol: "#ffd23f" };
-const GRANNY: PersonOpts = { expr: "smile", hat: "bow", hatCol: "#9b6bff", glasses: true, cane: true };
 
 const state = (id: number, f: number): SceneState => {
   const c = camAt(id, f);

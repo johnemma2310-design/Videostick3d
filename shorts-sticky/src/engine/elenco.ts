@@ -1,0 +1,66 @@
+// ELENCO FIJO de "Curiosidades con Sticky".
+// Personajes que se repiten entre videos: úsalos SIEMPRE desde aquí (no los redefinas en cada video)
+// para que se vean idénticos en todos los shorts. Si agregas uno nuevo, agrégalo aquí y en BIBLIA/PERSONAJES.md.
+import type { Card, V3 } from "./types";
+import type { Expr, Arm, PersonOpts, Look } from "./stick";
+import { blinkAt } from "./timeline";
+
+/** Escalas estándar (alto relativo de la tarjeta). No las cambies entre videos. */
+export const ESCALA = { sticky: 0.75, adulto: 0.74, nino: 0.54, perro: 0.62, gato: 0.5, ave: 0.35 } as const;
+
+/** Paleta de la marca: colores que se repiten en ropa, gorros y carteles. */
+export const PALETA = {
+  rojo: "#d84a3a", azulSticky: "#2f86d6", verde: "#3fa34d", amarillo: "#f2b632", morado: "#8a4fc9",
+  rosa: "#e36fa8", negro: "#2b2b33", naranja: "#f08a2c", turquesa: "#18a3a3",
+  // colores de los carteles de título (MARKS)
+  titulo: { alerta: "#ff4d4d", dato: "#ffd23f", espacio: "#7fd0ff", calma: "#7dff9a" },
+} as const;
+
+/** La bufanda de Sticky ondea a 1.3 Hz en 8 pasos (igual en todos los videos). */
+export const bufanda = (f: number) => Math.floor((((f / 30) * 1.3) % 1) * 8) / 8;
+
+/** Sticky, el protagonista: cabeza blanca grande y bufanda azul. Siempre al frente y sin nada tapándolo. */
+export const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: Look = [0, 0], walk?: number): Card => ({
+  kind: "sticky",
+  o: { expr, arm, look, walk, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: bufanda(f) },
+  x: pos[0], z: pos[2], y: pos[1] || undefined, s: ESCALA.sticky,
+});
+
+/** Una persona del elenco en una posición. */
+export const who = (o: PersonOpts, pos: V3, s: number = ESCALA.adulto, extra: Partial<Card> = {}): Card =>
+  ({ kind: "person", o, x: pos[0], z: pos[2], y: pos[1] || undefined, s, ...extra } as Card);
+
+// ---------- La familia (aparece en casa, cocina, ascensor...) ----------
+/** Mamá: coleta rosa. */
+export const MAMA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#ff6fa3" };
+/** Papá: bigote grueso, lentes y corbata azul. */
+export const PAPA: PersonOpts = { expr: "smile", hat: "none", stache: "thick", glasses: true, tie: "#2f86d6" };
+/** El niño: gorra amarilla (usar con ESCALA.nino). */
+export const NINO: PersonOpts = { expr: "happy", hat: "cap", hatCol: "#ffd23f" };
+/** La abuela: moño morado, lentes y bastón. */
+export const ABUELA: PersonOpts = { expr: "smile", hat: "bow", hatCol: "#9b6bff", glasses: true, cane: true };
+
+// ---------- Personajes de oficio (uno por escenario) ----------
+/** El granjero: sombrero vaquero, bigote y barba (granja). */
+export const GRANJERO: PersonOpts = { expr: "worried", hat: "cowboy", hatCol: "#b97d4a", stache: "thick", beard: "#7a5236", arm: "candle" };
+/** La científica: lentes, coleta morada (observatorio, aula, laboratorio). */
+export const CIENTIFICA: PersonOpts = { expr: "smile", hat: "pony", hatCol: "#8a4fc9", glasses: true };
+/** El profe: calvo con bigote rizado, lentes y corbata roja (aula). */
+export const PROFE: PersonOpts = { expr: "smile", hat: "none", stache: "curly", glasses: true, tie: "#d84a3a" };
+/** La doctora: gorro blanco tipo cofia y bolso rojo (hospital). */
+export const DOCTORA: PersonOpts = { expr: "worried", hat: "chef", glasses: true, bag: "#d84a3a" };
+/** El tendero: gorra verde y bigote fino (tienda). */
+export const TENDERO: PersonOpts = { expr: "smile", hat: "cap", hatCol: "#3fa34d", stache: "thin" };
+/** El obrero: casco amarillo y barba (calle, obras). */
+export const OBRERO: PersonOpts = { expr: "neutral", hat: "helmet", hatCol: "#f2b632", beard: "#4a3426" };
+/** El señor elegante: sombrero de copa, bigote rizado y bastón (calle, parque). */
+export const SENOR: PersonOpts = { expr: "neutral", hat: "tophat", hatCol: "#2b2b33", stache: "curly", cane: true };
+
+// ---------- Mascotas fijas ----------
+/** Toby, el perro de la familia: café con mancha oscura. */
+export const TOBY = { coat: "#c98f5a", spot: "#3a2c24" } as const;
+/** Michi, la gata de la familia: gris. */
+export const MICHI = { coat: "#8a8a94" } as const;
+
+// Nombres cortos que ya usaban los primeros videos (no borrar).
+export const MOM = MAMA, DAD = PAPA, KID = NINO, GRANNY = ABUELA, FARMER = GRANJERO;

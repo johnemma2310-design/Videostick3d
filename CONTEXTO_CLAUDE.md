@@ -2,6 +2,10 @@
 
 > Lee esto primero. Resume todo lo que se hizo en la otra PC (25 nov 2026) para que puedas seguir igual.
 
+> **Después lee la carpeta [`BIBLIA/`](BIBLIA/)**: [PERSONAJES](BIBLIA/PERSONAJES.md) (elenco fijo),
+> [ESCENARIOS](BIBLIA/ESCENARIOS.md), [CALIDAD](BIBLIA/CALIDAD.md) (estándar y revisión, con fotos de referencia),
+> [SINCRONIZAR](BIBLIA/SINCRONIZAR.md) (cómo trabajar entre las dos PCs) y [VIDEOS](BIBLIA/VIDEOS.md) (registro).
+
 ## Qué hacemos
 El usuario sube **shorts verticales para YouTube** a su canal **«Curiosidades con Sticky»** (@StickyElCurioso).
 Son preguntas del tipo **«¿Qué pasaría si…?»**, animadas en estilo **stickman en un mundo 3D de colores**.
@@ -30,6 +34,13 @@ usuario (abajo) mandan sobre la skill**.
     permite). Dentro van el `.mp4` y un `PUBLICAR.txt` con títulos calificados en vidIQ, descripción, #hashtags y
     tags.
 11. Sonido: la voz al frente, música y efectos sintetizados abajo, y el volumen final a **-14 LUFS**.
+12. **Mismo elenco en todos los videos:** usa los personajes de `shorts-sticky/src/engine/elenco.ts` (Sticky, MAMA,
+    PAPA, NINO, ABUELA, GRANJERO, CIENTIFICA, PROFE, DOCTORA, TENDERO, OBRERO, SENOR, TOBY, MICHI). Nunca los redefinas
+    dentro de un video. Si agregas un personaje o un escenario, apúntalo en `BIBLIA/`.
+13. **Calidad igual o mejor que los videos actuales:** sigue la lista de revisión de `BIBLIA/CALIDAD.md` antes de
+    dar un video por terminado.
+14. **Todo se guarda en GitHub:** al terminar cada video (o cada cambio al motor), corre `SINCRONIZAR.bat` (o
+    `git pull --rebase` + `git add -A` + commit + `git push`). Los `.mp4` y `.wav` no se suben; se regeneran.
 
 ## Estructura de carpetas (en la PC original: `Desktop\STICK 3D\`)
 ```
@@ -90,11 +101,12 @@ STICK 3D/
    hashtags y tags).
 
 ## Empezar en otra PC (desde este repo)
-1. Instala Node, Python 3 con numpy, ffmpeg y edge-tts (`pip install edge-tts numpy`).
-2. `cd shorts-sticky && npm install`.
-3. Convierte las voces: `ffmpeg -i voz/<v>/voz.mp3 -ar 48000 -ac 1 public/voz_<v>.wav` (con v = apagon, luna, rotacion, outro).
-4. Regenera el cierre: render de la composición `Outro` → `python -I audio/mezcla.py outro public/voz_outro.wav out/outro_mezcla.wav`
-   → júntalo con ffmpeg (`-map 0:v:0 -map 1:a:0`) → `python -I subtitulos.py voz/outro/palabras.json out/outro_sin_subs.mp4 out/outro_final.mp4`.
+1. Instala Git, Node 20 o más, Python 3 y ffmpeg. Luego `pip install edge-tts numpy`.
+2. `git clone https://github.com/johnemma2310-design/Videostick3d.git "STICK 3D"` y después `cd "STICK 3D\shorts-sticky"` y `npm install`.
+3. Para renderizar un video completo, corre `shorts-sticky\RENDERIZAR.bat apagon|luna|rotacion`. Hace la voz, la animación, el
+   sonido, los subtítulos y el cierre (este lo crea la primera vez), y deja el `.mp4` en la carpeta del video.
+   Para el Sol se usa `sol-apagado\RENDERIZAR.bat`.
+4. Para sincronizar, haz doble clic en `SINCRONIZAR.bat` al empezar y al terminar.
 5. La skill original de LuisPa (`SKILL.md` y las referencias de estilo) **no viene aquí**: clónala de su repo si la necesitas.
 
 ## Herramientas que se usaron (Windows)
