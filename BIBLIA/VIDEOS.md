@@ -6,6 +6,7 @@
 | Apagon mundial - Las primeras 72 horas | `shorts-sticky` / `Apagon` | 64.1 s con cierre | calle, casa, ascensor, parque, cocina, hospital, tienda, desierto/observatorio | Listo |
 | Y si la Luna desapareciera esta noche | `shorts-sticky` / `Luna` | 60.6 s con cierre | parque, espacio, granja, arrecife, playa, desierto, aula, casa | Listo |
 | Y si la Tierra dejara de girar 1 segundo | `shorts-sticky` / `Rotacion` | 58.4 s con cierre | parque, espacio, granja, calle, playa, polo, aula | Listo |
+| Y si ganaras 1 kg de musculo cada hora | `shorts-sticky` / `Musculo` (horizontal 1920×1080) | 10:06 con cierre | casa, gimnasio, calle, ascensor, hospital, tienda, granja, parque, desierto, playa, arrecife, espacio, aula | Listo (26 nov 2026, -14.2 LUFS) |
 | Alejandro Magno (Gaugamela) | `alejandro-victoria` | 9.8 s | campo de batalla | Prueba de estilo, sin voz |
 | Cierre "suscríbete" | `shorts-sticky` / `Outro` | 5.7 s | parque | Se pega al final de cada video |
 
