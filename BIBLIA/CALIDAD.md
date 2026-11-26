@@ -2,6 +2,8 @@
 
 Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia están en [`fotos/`](fotos/): `apagon.jpg`, `luna.jpg`, `rotacion.jpg`, `sol.jpg`, `subtitulos.jpg` y `cierre.jpg`. Si un render nuevo se ve peor que esas fotos, no está listo.
 
+> Para el ritmo, el movimiento y las paredes manda [SHORTS_NINOS.md](SHORTS_NINOS.md). La duración allí es 35–50 s más el cierre.
+
 ## Imagen
 
 | Cosa | Valor |
@@ -15,7 +17,7 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 | Personajes | Estilo v2: cuerpo con ropa y sombra de corte duro (ver `fotos/elenco_ficha.jpg`) |
 | Sombras | Cada personaje proyecta su silueta en el piso (la tarjeta se gira hacia el sol solo para la sombra) |
 
-## Formato horizontal (videos largos)
+## Formato horizontal (videos largos, retirado: solo referencia)
 
 - La historia declara `formato: "horizontal"` (`types.ts`) y en `Root.tsx` se registra con `{...dims(HISTORIA)}` → 1920×1080.
   Sin `formato` todo sigue vertical, igual que antes.

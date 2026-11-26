@@ -14,4 +14,6 @@
 
 Cada carpeta de video tiene su `PUBLICAR.txt` con título calificado en vidIQ, descripción, hashtags y tags.
 
+**26 nov 2026:** *Músculo* quedó muy educativo y en algunas partes los personajes atravesaban paredes. Desde ahora el canal hace solo shorts rápidos para niños (`SHORTS_NINOS.md`).
+
 **Pendiente:** el camino nevado del polo (Rotación) todavía se ve un poco beige.

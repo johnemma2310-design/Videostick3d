@@ -7,6 +7,8 @@
 > [SINCRONIZAR](BIBLIA/SINCRONIZAR.md) (cómo trabajar entre las dos PCs) y [VIDEOS](BIBLIA/VIDEOS.md) (registro).
 
 ## Qué hacemos
+**FORMATO OFICIAL (26 nov 2026): solo shorts verticales rápidos para niños.** Lee [BIBLIA/SHORTS_NINOS.md](BIBLIA/SHORTS_NINOS.md): 35–50 s, tomas de 1.5–3 s, todo en movimiento, guion con humor (máx. 2 datos) y nadie atraviesa paredes. Ya no se hacen videos largos.
+
 El usuario sube **shorts verticales para YouTube** a su canal **«Curiosidades con Sticky»** (@StickyElCurioso).
 Son preguntas del tipo **«¿Qué pasaría si…?»**, animadas en estilo **stickman en un mundo 3D de colores**.
 Todo se hace con código (three.js dentro de Remotion), sin generadores de video con IA.

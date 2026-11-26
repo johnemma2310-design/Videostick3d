@@ -1,0 +1,67 @@
+# Formato oficial: shorts rápidos para niños
+
+> **Decisión del 26 nov 2026.** El canal hace **solo shorts verticales** (1080×1920), pensados para niños: rápidos, con mucho
+> movimiento y poco "modo clase". El video largo horizontal (*Músculo*, 10 min) quedó muy educativo y **no se repite**;
+> su código se queda solo como referencia. Esta guía manda sobre cualquier regla anterior que choque con ella.
+
+## 1. Ritmo (lo más importante)
+
+| Cosa | Valor |
+|---|---|
+| Duración | **35–50 s** + cierre (antes 55–60 s) |
+| Gancho | En los **primeros 2 s**: la pregunta + algo que pasa YA en pantalla (explosión, caída, susto) |
+| Largo de cada toma | **1.5–3 s (45–90 cuadros)**. Nunca más de 4 s quieta en el mismo encuadre |
+| Tomas por short | **18–30** (antes 8–14), en **6 o más escenarios** |
+| Algo nuevo | Cada **2–3 s** pasa algo: cambio de toma, golpe, zoom, cartel, personaje que entra corriendo |
+| Voz | Igual: `es-MX-JorgeNeural` a `+24%`, frases cortas (máx. 10–12 palabras) |
+
+## 2. Movimiento: nada está quieto
+
+**Cámara** (en `camAt` / llaves de toma):
+- Toda toma tiene movimiento de cámara: acercamiento (push-in), alejamiento, paneo o vuelta alrededor de Sticky.
+- Usa **zoom de golpe** (fov baja 8–12 en 6 cuadros) en las palabras fuertes.
+- Pon `shake` (sacudida) en golpes, caídas y sorpresas, y `speedLines` cuando alguien corre o algo vuela.
+- Alterna planos: general → medio → primer plano de la cara de Sticky. No dos tomas seguidas con el mismo plano.
+
+**Personajes** (en `cards`):
+- Sticky **siempre hace algo**: camina, corre (`run`), salta, gesticula (`wave`, `cheer`, `point`, `flex`…) y **habla** (`voz`).
+- Las entradas y salidas son **corriendo**, nunca apareciendo de la nada.
+- Usa saltos y rebotes (`y` con un seno corto) en celebraciones y sustos.
+- Las caras van **exageradas**: sorpresa, miedo, risa. Cambia de `expr` en cada toma.
+- Los extras y animales del fondo también se mueven: perros corriendo, gente caminando y pájaros volando.
+
+**Pantalla:**
+- Los carteles (`MARKS`) entran con rebote. Máx. 3 palabras y números grandes.
+- Ponle a cada corte un **efecto de sonido** (whoosh, pop, boing, golpe) en `audio/mezcla.py`. La música va animada, no pads lentos.
+
+## 3. Guion para niños
+
+- Es **humor + asombro**, no una clase. Sticky sufre o goza la situación en carne propia, con chistes y exageraciones.
+- Lleva **1 o 2 datos reales**, dichos simple ("¡pesarías como un elefante!"), y no tablas de números ni términos médicos.
+- Las frases van cortas, con onomatopeyas (¡PUM!, ¡zas!) y preguntas al espectador ("¿tú qué harías?").
+- Al terminar va el mismo cierre: "Si quieres saber más, suscríbete y déjame en los comentarios qué más quieres saber".
+- Igual guarda la fuente de los datos en `voz/<video>/fuentes.txt`.
+
+## 4. Nadie atraviesa paredes (error visto en *Músculo*)
+
+Los interiores (`house`, `elevator`, `hospital`, `store`, `classroom`, `gym`) son cuartos sin techo con paredes reales.
+Ningún personaje ni cámara puede cruzarlas.
+
+- **Posiciones dentro del cuarto** con al menos **0.6 m de margen** a cada pared. Esto vale para el principio **y el final** de cada caminata o carrera.
+- Si alguien tiene que salir del cuarto, **córtalo**: termina la toma antes de llegar a la pared, o que salga por la puerta.
+- Revisa el camino completo: si va de A a B, ninguna parte de la línea puede cruzar una pared ni un mueble grande (sofá, cama, estantes, mostrador).
+- **La cámara también queda adentro**, o arriba del borde de la pared mirando hacia abajo, nunca pegada al muro.
+- Si Sticky crece (musculoso o gigante), toma su ancho real para el margen.
+- Prueba: saca foto del **primer y último cuadro** de cada toma que tenga movimiento en un interior.
+
+## 5. Lista de revisión extra (además de `CALIDAD.md`)
+
+- [ ] El short dura 35–50 s más el cierre.
+- [ ] En los primeros 2 s pasa algo en pantalla.
+- [ ] Ninguna toma dura más de 4 s y hay 18 o más tomas.
+- [ ] La cámara se mueve en todas las tomas, con zooms de golpe y sacudidas en los momentos fuertes.
+- [ ] Sticky se mueve y cambia de cara en cada toma.
+- [ ] Nadie atraviesa paredes ni muebles (fotos del primer y último cuadro de cada toma en interiores).
+- [ ] Cada corte tiene su efecto de sonido.
+- [ ] El guion tiene chistes, frases cortas y máximo 2 datos, sin palabras técnicas.
+- [ ] El short tiene subtítulos y cierre, como siempre.

@@ -5,6 +5,8 @@ model: haiku
 tools: Bash, PowerShell, Read, Glob, Grep
 ---
 
+> Formato oficial: shorts rápidos para niños. Ver `BIBLIA/SHORTS_NINOS.md` (mucho movimiento; nadie atraviesa paredes).
+
 Eres el renderizador del canal "Curiosidades con Sticky". El proyecto está en `C:\Users\cit\Desktop\STICK 3D`. Primero lee `AGENTS.md`.
 
 Reglas:
