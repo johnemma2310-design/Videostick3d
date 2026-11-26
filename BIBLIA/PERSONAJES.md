@@ -110,6 +110,25 @@ ojitos negros con brillo, cejas expresivas y patas finas con patitas de color. P
 | `wave` | Ola gigante (tarjeta ancha) |
 | `top` | Trompo girando (para explicar el bamboleo de la Tierra) |
 
+## Cameo: invitado especial (`cameo`)
+
+Una tarjeta ancha donde una persona (por defecto `INVITADO`, gorra roja y playera amarilla) sostiene un **marco dorado con la
+foto de perfil** de un usuario de YouTube recortada en círculo, con una **cinta dorada "INVITADO ESPECIAL"** y estrella arriba
+y su **@nombre** en un cartel azul abajo. Código: `engine/cameo.ts`; ayuda en `elenco.ts`.
+
+```ts
+import { cameo } from "../engine/elenco";
+const INVITADO_ESPECIAL = { foto: "cameo/ganador.jpg", nombre: "@usuario" }; // foto dentro de public/
+export const MI_VIDEO: Story = { ..., cameo: INVITADO_ESPECIAL };          // precarga la foto antes de pintar
+// en state(): cards: [sticky(...), cameo(f, INVITADO_ESPECIAL, [x, 0, z])]
+// opciones: cameo(f, c, pos, quien = INVITADO, { expr, saluda })  (saluda = mueve la mano en vez de sostener el marco)
+```
+
+- Mide ~3.2 m de ancho y ~2 m de alto (escala adulto); el marco queda ~0.3 m a la derecha del centro y la persona ~0.5 m a la izquierda.
+- Si la foto no existe se ve un **"?"** blanco sobre un círculo de color (no se rompe el render).
+- Foto de ejemplo (dibujada, no de internet): `public/cameo/ejemplo.jpg`. La del ganador la baja `scripts/cameo.py` a `public/cameo/ganador.jpg`.
+- Sin olvidar `cameo:` en la `Story`, la foto no se precarga y sale el "?". Ejemplo de uso: toma 34 de `gravedad.ts`.
+
 ## Movimiento
 
 ![Movimiento](fotos/movimiento_ficha.jpg)

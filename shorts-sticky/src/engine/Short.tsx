@@ -1,8 +1,9 @@
 // Generic short: one canvas per live shot (crossfades stack a second one), post chain InkPass -> lens blur ->
 // bloom -> NEUTRAL tone map -> grade (MSAA 4), titles at the top. Audio + subtitles are added after the render.
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { AbsoluteFill, useCurrentFrame, getInputProps } from "remotion";
+import { AbsoluteFill, useCurrentFrame, getInputProps, delayRender, continueRender } from "remotion";
+import { cargarFoto, fotoEstado } from "./cameo";
 import { ThreeCanvas } from "@remotion/three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { BlendFunction, BloomEffect, EffectComposer, EffectPass, RenderPass, ToneMappingEffect, ToneMappingMode } from "postprocessing";
@@ -88,8 +89,17 @@ const Overlay: React.FC<{ f: number; story: Story; speed: number }> = ({ f, stor
   );
 };
 
+/** precarga la foto del cameo (story.cameo) antes de pintar el primer cuadro; si no existe se dibuja un "?" */
+const useFotoCameo = (story: Story) => {
+  const foto = story.cameo?.foto;
+  const [h] = useState(() => (foto && fotoEstado(foto) === "cargando" ? delayRender("foto del cameo") : null));
+  const [, listo] = useState(0);
+  useEffect(() => { if (h === null || !foto) return; cargarFoto(foto).then(() => { listo(1); continueRender(h); }); }, [h, foto]);
+};
+
 export const makeShort = (story: Story): React.FC => () => {
   const f = useCurrentFrame();
+  useFotoCameo(story);
   const layers = story.layersAt(f), top = layers[layers.length - 1];
   return (
     <AbsoluteFill style={{ background: "#9cbfea" }}>

@@ -27,9 +27,10 @@ usuario (abajo) mandan sobre la skill**.
 5. **Subtítulos quemados palabra por palabra:** grupos de 2 o 3 palabras, la palabra que se está diciendo en
    amarillo y la posición a ~72 % de la altura.
 6. **Títulos discretos arriba** (cifras, «HORA 0», «1,670 km/h»…), sin taparle la cara a nadie.
-7. **Cierre fijo al final de cada video** (5.7 s): el narrador dice «Si quieres saber más, suscríbete, y déjame en los
-   comentarios qué más quieres saber». Salen Sticky y el elenco saludando, un botón rojo SUSCRIBIRSE que se
-   presiona (cambia a SUSCRITO ✓ y suena una campanita) y una burbuja «¿Qué más quieres saber? ¡Comenta!».
+7. **Cierre fijo al final de cada video** (10.9 s): el narrador dice «Si quieres saber más, suscríbete, dale like y déjame en
+   los comentarios qué más quieres saber. ¡Y el último en comentar en mi video largo sale en el próximo short, con su foto
+   y su nombre!». Salen Sticky y el elenco saludando, el botón SUSCRIBIRSE que cambia a SUSCRITO ✓ con campanita, la burbuja
+   «¿Qué más quieres saber? ¡Comenta!» y el cartel «¡TU CAMEO AQUÍ!» con un invitado que sostiene un marco de foto con «?».
 8. **Duración:** la misma que el video de referencia que te pase, en general unos 55 s más el cierre.
 9. **Guion propio**, con datos reales y su fuente. Del video de referencia se toma el tema, nunca el texto.
 10. Cada video terminado va en **su propia carpeta, con el nombre del video** (sin `¿?`, que Windows no los

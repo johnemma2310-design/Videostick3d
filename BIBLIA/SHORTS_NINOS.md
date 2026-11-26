@@ -39,7 +39,7 @@
 - Es **humor + asombro**, no una clase. Sticky sufre o goza la situación en carne propia, con chistes y exageraciones.
 - Lleva **1 o 2 datos reales**, dichos simple ("¡pesarías como un elefante!"), y no tablas de números ni términos médicos.
 - Las frases van cortas, con onomatopeyas (¡PUM!, ¡zas!) y preguntas al espectador ("¿tú qué harías?").
-- Al terminar va el mismo cierre: "Si quieres saber más, suscríbete y déjame en los comentarios qué más quieres saber".
+- Al terminar va el mismo cierre: el cierre nuevo de `CALIDAD.md` (suscríbete, like, comenta y cameo).
 - Igual guarda la fuente de los datos en `voz/<video>/fuentes.txt`.
 
 ## 4. Nadie atraviesa paredes (error visto en *Músculo*)
@@ -54,6 +54,17 @@ Ningún personaje ni cámara puede cruzarlas.
 - Si Sticky crece (musculoso o gigante), toma su ancho real para el margen.
 - Prueba: saca foto del **primer y último cuadro** de cada toma que tenga movimiento en un interior.
 
+## Cameo del invitado especial
+
+Al final del short (antes del cierre) va un plano de ~2 s donde Sticky saluda al **invitado especial**: la última persona que
+comentó en el último video. Pasos:
+
+1. `python -I scripts/cameo.py` (en `shorts-sticky/`): imprime los últimos comentarios, el nombre del ganador y **baja su foto de
+   perfil** (`authorProfileImageUrl`) a `public/cameo/ganador.jpg`.
+2. En la historia: `cameo: { foto: "cameo/ganador.jpg", nombre: "@nombre" }` y la tarjeta `cameo(f, ..., [x, 0, z])` en la toma
+   (ver `BIBLIA/PERSONAJES.md`, sección Cameo). Mientras no haya ganador usa `cameo/ejemplo.jpg` y "TU NOMBRE AQUÍ".
+3. Revisa con una foto suelta que se lea el nombre y que la cara quede fuera de la franja de subtítulos.
+
 ## 5. Lista de revisión extra (además de `CALIDAD.md`)
 
 - [ ] El short dura 35–50 s más el cierre.
@@ -65,3 +76,11 @@ Ningún personaje ni cámara puede cruzarlas.
 - [ ] Cada corte tiene su efecto de sonido.
 - [ ] El guion tiene chistes, frases cortas y máximo 2 datos, sin palabras técnicas.
 - [ ] El short tiene subtítulos y cierre, como siempre.
+
+## 6. Cameo del último comentario
+
+- Cada short nuevo incluye como **cameo** (un stickman `person` del elenco con un cartel con su nombre de usuario, y su foto si la hay) a la **última persona que comentó en el último video largo del canal**. El cierre lo anuncia: «¡Y el último en comentar en mi video largo sale en el próximo short, con su foto y su nombre!».
+- El ganador sale de `python -I scripts/cameo.py largo` (API de YouTube) o lo da el usuario. Las claves NUNCA se suben a git: van en `secretos/` (ya ignorado).
+- Cada short se sube con ese video largo como **"Video relacionado"**. Los videos largos los hace otro proyecto (animación 2D).
+- En cada `PUBLICAR.txt` de short va la línea `VIDEO RELACIONADO: <el último video largo del canal>`.
+- Revisión: [ ] el cameo aparece con nombre; [ ] `PUBLICAR.txt` trae VIDEO RELACIONADO.

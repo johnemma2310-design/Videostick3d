@@ -8,7 +8,7 @@ import numpy as np
 
 SR = 48000
 name, voz_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "gravedad": 1483, "outro": 170}
+KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "gravedad": 1483, "outro": 326}
 def frames_of(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path], capture_output=True, text=True, check=True).stdout
     return int(round(float(out.strip()) * 30))
@@ -119,12 +119,12 @@ elif name == "luna":
     put(sfx, boom(1.2, 90, 50, 0.2), F(1529), -15); put(sfx, chime(1568, 1.6), F(1614), -18)
 elif name == "gravedad":
     # short para niños: música animada todo el rato + un efecto en cada corte (whoosh / pop / boing / golpe)
-    CUTS = [55, 115, 168, 222, 290, 362, 436, 488, 536, 584, 632, 695, 745, 790, 840, 898, 960, 1020, 1075, 1122, 1178, 1240, 1290, 1350, 1415]
+    CUTS = [40, 80, 118, 165, 215, 250, 284, 320, 358, 398, 440, 488, 533, 575, 628, 668, 712, 778, 822, 860, 898, 945, 1000, 1048, 1085, 1120, 1160, 1198, 1252, 1290, 1325, 1360, 1410]  # v2: 34 tomas
     def pop(): return tone(700, 0.09, 0.001, 0.03)
     def boing(): return sweep(220, 700, 0.28) * 0.7
     happy(0, F(1240), -21, 124)
     for k, f in enumerate(CUTS):
-        if f in (1240, 1290): continue
+        if f in (1252, 1290): continue
         kind = k % 4
         if kind == 0: put(sfx, whoosh(0.5, 0.25, 6), F(f) - 0.2, -17, 0.4 * (-1) ** k)
         elif kind == 1: put(sfx, pop(), F(f), -16, 0.3 * (-1) ** k)
@@ -145,12 +145,16 @@ elif name == "gravedad":
     put(sfx, sweep(900, 200, 0.7), F(1360), -17); put(sfx, boom(1.0, 90, 40, 0.5), F(1384), -7); put(sfx, bark(), F(1392), -16, 0.4)
     happy(F(1290), L, -22, 124)
     put(sfx, chime(1568, 1.4), F(1448), -16)
+    for f in (1138, 1152, 1166): put(sfx, tone(330, 0.12, 0.001, 0.05), F(f), -13)                # ¡toc! (elevador)
+    for f in (1311, 1346): put(sfx, boom(0.5, 95, 40, 0.5), F(f), -12)                       # pupitres / cama caen
+    put(sfx, chime(1175, 0.9), F(1412), -17)                                                 # cameo: invitado especial
 elif name == "outro":
     happy(0, L, -19)
-    put(sfx, tone(880, 0.12, 0.001, 0.05), F(36), -14)            # button pops in
-    put(sfx, tone(2400, 0.04, 0.0005, 0.01), F(58), -10)           # click
-    for k in range(3): put(sfx, chime(1568 + 300 * k, 0.8), F(60) + k * 0.08, -16)  # bell
-    put(sfx, tone(660, 0.12, 0.001, 0.05), F(80), -14)             # comment bubble
+    put(sfx, tone(880, 0.12, 0.001, 0.05), F(28), -14)            # button pops in
+    put(sfx, tone(2400, 0.04, 0.0005, 0.01), F(47), -10)           # click
+    for k in range(3): put(sfx, chime(1568 + 300 * k, 0.8), F(48) + k * 0.08, -16)  # bell
+    put(sfx, tone(660, 0.12, 0.001, 0.05), F(90), -14)             # comment bubble
+    put(sfx, tone(520, 0.25, 0.002, 0.12), F(158), -12); put(sfx, tone(1040, 0.2, 0.002, 0.1), F(162), -14)  # cartel cameo
 elif name != "rotacion":
     # genérica para videos nuevos (largos): música alegre suave con descansos de pad cada ~40 s y un golpe en cada corte
     t0 = 0.0

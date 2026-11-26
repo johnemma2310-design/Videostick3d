@@ -7,7 +7,7 @@ import type { Story, SceneState, Card, V3 } from "../engine/types";
 import { makeTimeline, Shot, smooth, blinkAt, gait } from "../engine/timeline";
 import { band } from "../engine/crowd";
 
-const TOTAL = 170;
+const TOTAL = 326;
 const SHOTS: Shot[] = [{ id: 1, a: 0, b: TOTAL, keys: [
   { f: 0, pos: [1.25, 1.55, 6.6], look: [1.45, 1.1, -1.2], fov: 42 },
   { f: TOTAL, pos: [1.05, 1.45, 5.2], look: [1.25, 1.05, -0.8], fov: 41, glide: true },

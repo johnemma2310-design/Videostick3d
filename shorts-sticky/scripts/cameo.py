@@ -1,6 +1,6 @@
 """Busca al ganador del cameo: la última persona que comentó en el último video del canal.
 
-Uso (desde shorts-sticky):  python -I scripts/cameo.py            -> último video subido
+Uso (desde shorts-sticky):  python -I scripts/cameo.py            -> último video largo (por defecto)
                             python -I scripts/cameo.py largo      -> último video de más de 3 min
                             python -I scripts/cameo.py <videoId>  -> un video concreto
 
@@ -42,7 +42,7 @@ def segundos(iso):
 
 
 def main():
-    arg = sys.argv[1] if len(sys.argv) > 1 else ""
+    arg = sys.argv[1] if len(sys.argv) > 1 else "largo"  # por defecto: último video largo
     h = {"Authorization": "Bearer " + access_token()}
     canal = get(h, "channels", part="snippet,contentDetails", mine="true")["items"][0]
     print("Canal:", canal["snippet"]["title"])
@@ -93,6 +93,21 @@ def main():
         texto = c["textOriginal"].replace("\n", " ")[:80]
         print(f"- {c['authorDisplayName']}  | {c['publishedAt'][:16]} | likes del comentario: {c['likeCount']}"
               f" | suscrito: {sus}\n    «{texto}»")
+
+    # foto de perfil del ganador -> public/cameo/ganador.jpg (para la tarjeta de cameo del motor)
+    gan = coms[0]
+    url = gan.get("authorProfileImageUrl", "")
+    if url:
+        url = re.sub(r"=s\d+", "=s512", url)  # pedir la foto más grande
+        destino = RAIZ / "shorts-sticky" / "public" / "cameo" / "ganador.jpg"
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+        destino.write_bytes(r.content)
+        print(f"\nGanador: {gan['authorDisplayName']}  ->  foto guardada en {destino}")
+        print(f"  En la historia: cameo: {{ foto: \"cameo/ganador.jpg\", nombre: \"{gan['authorDisplayName']}\" }}")
+    else:
+        print(f"\nGanador: {gan['authorDisplayName']} (sin foto de perfil: la tarjeta mostrará un \"?\")")
 
 
 if __name__ == "__main__":

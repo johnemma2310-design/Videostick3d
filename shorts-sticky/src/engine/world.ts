@@ -11,7 +11,8 @@ import { grassHD, cloudHD, rep, ctex } from "./paint";
 import { type StickyOpts, sticky, person, dog, cat, bird, turtle, penguin, car, wave, cow, chicken, pig, fishCard, beetle, spinTop, plane } from "./stick";
 import type { Story, Env, Card, V3 } from "./types";
 import { FPS, hh, smooth } from "./timeline";
-import { buildSets, updateSets, SetRefs } from "./sets";
+import { buildSets, updateSets, SetRefs, moverFlotantes, type Flotantes } from "./sets";
+import { cameoDraw, fotoEstado } from "./cameo";
 
 export const STREET_X = 400, BEACH_X = -400;
 const lam = (p: THREE.MeshLambertMaterialParameters) => twoTone(new THREE.MeshLambertMaterial(p));
@@ -126,6 +127,7 @@ const drawCard = (c: Card) => (p: Pen) => {
     case "beetle": return beetle(p, c.o);
     case "top": return spinTop(p, c.o);
     case "plane": return plane(p, c.o);
+    case "cameo": return cameoDraw(p, c.o);
   }
 };
 
@@ -133,6 +135,8 @@ export class World {
   root = new THREE.Group();
   private sets: Record<string, THREE.Group> = Object.fromEntries(["park", "street", "beach", "space", "house", "elevator", "hospital", "store", "classroom", "desert", "reef", "farm", "gym"].map((k) => [k, new THREE.Group()]));
   private setRefs!: SetRefs;
+  /** objetos sueltos de cada escenario que flotan con S.flota */
+  private flotan: Flotantes = {};
   private pool = new Pool(); private actors: Actor[] = []; private fxs: Fx[] = [];
   private hemi: THREE.HemisphereLight; private sun: THREE.DirectionalLight; private sunPoint: THREE.PointLight; private amb: THREE.AmbientLight;
   private skyMat: THREE.ShaderMaterial; private sky: THREE.Mesh; private fog = new THREE.Fog("#bccbec", 40, 260);
@@ -188,7 +192,7 @@ export class World {
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: cm[i % 4], transparent: true, depthWrite: false, fog: false }));
       const w = 110 + hh(i, 23) * 100; m.scale.set(w, w / 2, 1); m.layers.set(NOINK); this.clouds.push(m); R.add(m);
     }
-    this.buildPark(); this.buildStreet(); this.buildBeach(); this.setRefs = buildSets(this.sets);
+    this.buildPark(); this.buildStreet(); this.buildBeach(); this.setRefs = buildSets(this.sets, this.flotan);
     // ---- space ----
     const S = this.sets.space;
     this.sunBallM = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.15, 0.6, 0.1) });
@@ -241,6 +245,7 @@ export class World {
     const wood = lam({ color: "#a8743c" }), iron = lam({ color: "#3a3a44" });
     for (const [bx, bz, ry] of [[-3, -3.2, 0], [3.2, -3.2, 0], [-3.5, -9, 0.4]]) {
       const b = new THREE.Group(); b.position.set(bx, 0, bz); b.rotation.y = ry;
+      (this.flotan.park ??= []).push({ o: b, p: b.position.clone(), r: b.rotation.clone(), h: 2.2 + hh(bx, 3) * 1.2, ph: bx * 1.7, sp: 0.8, dx: 0, dz: 0 });
       for (const [y, z, h] of [[0.45, 0, 0.06], [0.75, -0.22, 0.32]]) { const s = new THREE.Mesh(new THREE.BoxGeometry(1.6, h, 0.42), wood); s.position.set(0, y, z); s.castShadow = true; b.add(s); }
       for (const x of [-0.7, 0.7]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.45, 0.4), iron); l.position.set(x, 0.22, 0); b.add(l); }
       g.add(b);
@@ -345,6 +350,7 @@ export class World {
     place(this.milky, MILKY_DIR, 1500); this.milky.rotateZ(0.7); (this.milky.material as THREE.MeshBasicMaterial).opacity = S.milky ?? 0; this.milky.visible = (S.milky ?? 0) > 0.01 && !inSpace;
     this.clouds.forEach((m, i) => { const a = (i / 18) * Math.PI * 2 + hh(i, 20), d = 500 + hh(i, 21) * 400; m.position.set(cam.position.x + Math.cos(a) * d, 90 + hh(i, 22) * 220, cam.position.z + Math.sin(a) * d); m.quaternion.copy(cam.quaternion); m.visible = !inSpace && env !== "night" && env !== "underwater" && ["park", "street", "beach", "desert", "farm"].includes(S.set); });
     updateSets(this.setRefs, S, f);
+    moverFlotantes(this.flotan, S, f);
     // ---- snowy park (the pole) ----
     this.parkGround.material = S.snow ? this.snowM : this.grassM;
     this.pathM.color.set(S.snow ? "#e8f0fb" : "#ffffff"); this.crossM.color.set(S.snow ? "#e8f0fb" : "#ffffff");
@@ -381,7 +387,7 @@ export class World {
     this.frustum.setFromProjectionMatrix(this.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
     const rolls: number[] = [], casts: boolean[] = [], breath: number[] = [];
     for (const cd of S.cards) {
-      const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane", xb = xcard(cd);
+      const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane" || cd.kind === "cameo", xb = xcard(cd);
       if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(cd.x, y + 1.1 * s, cd.z), (wide ? 4.5 : xb ? 2.2 : 1.6) * s))) continue;
       const d = cam.position.distanceTo(this.v.set(cd.x, y + 1 * s, cd.z)) / s, dk = d * this.tierK;
       const size = wide ? tierW(dk) : xb ? tierX(dk) : tier(dk);
@@ -391,7 +397,7 @@ export class World {
         if (tk) (cd as { o: StickyOpts }).o = { ...cd.o, talk: tk };
       }
       breath.push(wide ? 0 : Math.sin(t * 2.4 + cd.x * 1.7 + cd.z * 2.3));
-      st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}`, x: cd.x, y, z: cd.z, size, scale: s, wide, xbody: xb, mirror: !!cd.mirror, draw: drawCard(cd) });
+      st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}${cd.kind === "cameo" ? "|" + fotoEstado(cd.o.foto) : ""}`, x: cd.x, y, z: cd.z, size, scale: s, wide, xbody: xb, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);
       const grounded = (cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
       casts.push(grounded && d * s < 60);

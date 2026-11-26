@@ -20,6 +20,27 @@ Para ubicar algo dentro de un escenario, usa `at(ORIGIN.house, x, y, z)`.
 | `farm` | 400, 0, 450 | Surcos, granero rojo, silo, cerca y paja | Luna, Rotación |
 | `gym` | 300, 0, 800 | Gimnasio de colores: piso de goma con motitas, tapetes de colores, espejo grande, rack de mancuernas, banco con barra y discos, árbol de discos, 2 caminadoras, saco de boxeo, pesas rusas, báscula grande y carteles (¡TÚ PUEDES!, SIN EXCUSAS, ¡UNA MÁS!, TOMA AGUA). Flags `bascula`, `saco`, `cinta` | Músculo (prueba `PruebaH`) |
 
+### Sin gravedad: `flota` (0..1)
+
+Con `flota` en el `SceneState`, los objetos sueltos del escenario activo **suben y giran despacio** (0 = todo en su lugar, el
+valor por defecto, así que los videos viejos no cambian). Se registran en `sets.ts` con `flotante(FL, set, objeto, altura, { sp, dx, dz })`:
+
+| `set` | Qué flota |
+|---|---|
+| `park` | las 3 bancas |
+| `house` | mesa, 2 sillas, sofá, lámpara de pie y maceta |
+| `classroom` | 12 pupitres (la fila de adelante sube menos para no tapar la cámara), escritorio del profe y globo terráqueo |
+| `gym` | 14 mancuernas (salen del rack hacia el centro), barra con discos, 3 discos del árbol, 3 pesas rusas y botellas |
+| `farm` | 6 pacas de paja |
+| `hospital` | cama y suero |
+| `store` | todos los productos de los estantes (salen volando al pasillo) y la caja |
+| `beach` | 90 gotas y burbujas de agua del mar que suben (algunas gigantes) |
+
+- Para que suban: `flota: flotaSube(f, f0)`. Para que **caigan con rebote** al volver la gravedad: `flota: flotaCae(f, f0, T)`
+  (`T` = cuadros de caída; dos rebotes chiquitos y luego 0). Ambas en `sets.ts`.
+- Los coches de la calle son tarjetas: hazlos flotar en la historia (ver `flo()` en `gravedad.ts`).
+- Para girar a un personaje sobre su centro (no sobre los pies), usa `spinC()` de `gravedad.ts`.
+
 ### Gimnasio (`gym`): dónde está cada cosa
 
 Cuarto de 14 × 10 m (paredes naranja, celeste y rosa con `emissive 0.45`). Todo con `at(ORIGIN.gym, x, y, z)`:

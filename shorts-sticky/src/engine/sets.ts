@@ -34,16 +34,59 @@ const room = (g: THREE.Group, o: readonly number[], w: number, d: number, h: num
   box(g, w, h, 0.2, X, h / 2, Z - d / 2, wall(back), false); box(g, 0.2, h, d, X - w / 2, h / 2, Z, wall(left), false); box(g, 0.2, h, d, X + w / 2, h / 2, Z, wall(right), false);
 };
 
+// ---------- sin gravedad: objetos sueltos que flotan con S.flota (0..1) ----------
+/** un objeto que flota: posición/rotación de reposo, altura máxima h (m), fase, giro sp y deriva (dx, dz) al flotar */
+export type Flotante = { o: THREE.Object3D; p: THREE.Vector3; r: THREE.Euler; h: number; ph: number; sp: number; dx: number; dz: number };
+export type Flotantes = Record<string, Flotante[]>;
+/** registra un objeto (ya colocado) como flotante del escenario `set` */
+export const flotante = <T extends THREE.Object3D>(F: Flotantes, set: string, o: T, h: number, o2: { sp?: number; dx?: number; dz?: number } = {}): T => {
+  (F[set] ??= []).push({ o, p: o.position.clone(), r: o.rotation.clone(), h, ph: hh(o.position.x * 1.3 + o.position.z * 2.1, 5) * 6.283, sp: o2.sp ?? 1, dx: o2.dx ?? 0, dz: o2.dz ?? 0 });
+  return o;
+};
+/** grupo con pivote en (x, y, z) dentro de g: las piezas se agregan con coordenadas locales */
+const pieza = (g: THREE.Object3D, x: number, y: number, z: number) => { const k = new THREE.Group(); k.position.set(x, y, z); g.add(k); return k; };
+/** mueve todo lo que flota del escenario activo; con flota = 0 todo queda exactamente en su lugar */
+export const moverFlotantes = (F: Flotantes, S: SceneState, f: number) => {
+  const k = Math.max(0, S.flota ?? 0), t = f / 30;
+  const list = F[S.set];
+  if (!list) return;
+  const w = Math.min(1, k); // deriva y giro llegan al máximo con k = 1; la altura sigue a k (también los rebotes)
+  for (const q of list) {
+    q.o.position.set(
+      q.p.x + w * (q.dx + Math.sin(t * 0.8 + q.ph) * 0.12),
+      q.p.y + k * q.h + w * Math.sin(t * 1.4 + q.ph) * 0.1,
+      q.p.z + w * (q.dz + Math.cos(t * 0.7 + q.ph) * 0.1));
+    q.o.rotation.set(
+      q.r.x + w * q.sp * Math.sin(t * 0.9 + q.ph) * 0.5,
+      q.r.y + w * q.sp * (Math.sin(t * 0.5 + q.ph * 2) * 0.8 + t * 0.15),
+      q.r.z + w * q.sp * Math.cos(t * 0.7 + q.ph) * 0.45);
+  }
+};
+/** flota que sube suave desde f0 (0 -> 1 en ~1 s) */
+export const flotaSube = (f: number, f0: number, tau = 14) => (f < f0 ? 0 : 1 - Math.exp(-(f - f0) / tau));
+/** al volver la gravedad en f0: cae de golpe (caída libre de T cuadros) y da dos rebotes chiquitos */
+export const flotaCae = (f: number, f0: number, T = 15) => {
+  if (f < f0) return 1;
+  const u = f - f0;
+  if (u < T) return 1 - (u / T) ** 2;
+  const v = u - T;
+  return v > 36 ? 0 : 0.14 * Math.exp(-v / 7) * Math.abs(Math.sin((v / 9) * Math.PI));
+};
+
 export type SetRefs = {
   tv: THREE.MeshBasicMaterial; lamp: THREE.MeshBasicMaterial; windows: THREE.MeshBasicMaterial[]; fridgeDoor: THREE.Object3D; fridgeLight: THREE.MeshBasicMaterial;
   tap: THREE.Mesh; elevLight: THREE.MeshBasicMaterial; elevBtns: THREE.MeshBasicMaterial; monitor: THREE.MeshBasicMaterial; genLight: THREE.MeshBasicMaterial;
   storeLights: THREE.MeshBasicMaterial[]; globe: THREE.Object3D; weeds: THREE.Mesh[]; spawn: { pts: THREE.Points; u: { uT: { value: number }; uShow: { value: number } } };
   domeSlit: THREE.MeshBasicMaterial;
   gymNeedle: THREE.Object3D; gymBag: THREE.Object3D; gymBelt: THREE.Texture;
+  /** súper: productos de los estantes (instancias) con su posición de reposo, para que salgan volando */
+  storeProds: { inst: THREE.InstancedMesh; base: THREE.Vector3[]; sx: number; last: number }[];
+  /** playa: gotas y burbujas de agua del mar que suben sin gravedad */
+  drops: { inst: THREE.InstancedMesh; base: { x: number; z: number; h: number; r: number; ph: number }[] };
 };
 
-export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
-  const R = {} as SetRefs; R.windows = []; R.storeLights = []; R.weeds = [];
+export const buildSets = (groups: Record<string, THREE.Group>, FL: Flotantes = {}): SetRefs => {
+  const R = {} as SetRefs; R.windows = []; R.storeLights = []; R.weeds = []; R.storeProds = [];
   // ================= house: kitchen + living room =================
   {
     const g = groups.house, o = ORIGIN.house, [X, , Z] = o;
@@ -68,17 +111,17 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
     box(door, 0.05, 0.5, 0.05, -0.36, 0.2, 0.06, lam("#7a8090"));
     R.fridgeDoor = hinge;
     // table + chairs
-    box(g, 1.6, 0.08, 1.0, X - 1.8, 0.78, Z - 1.0, lam("#ff9a3c")); for (const [dx, dz] of [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]]) cyl(g, 0.04, 0.04, 0.78, X - 1.8 + dx, 0.39, Z - 1.0 + dz, lam("#7a4b2a"));
-    for (const dx of [-1, 1]) { box(g, 0.45, 0.06, 0.45, X - 1.8 + dx * 1.15, 0.48, Z - 1.0, lam("#2f86d6")); box(g, 0.06, 0.5, 0.45, X - 1.8 + dx * 1.38, 0.75, Z - 1.0, lam("#2f86d6")); }
+    { const tb = pieza(g, X - 1.8, 0.4, Z - 1.0); box(tb, 1.6, 0.08, 1.0, 0, 0.38, 0, lam("#ff9a3c")); for (const [dx, dz] of [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]]) cyl(tb, 0.04, 0.04, 0.78, dx, -0.01, dz, lam("#7a4b2a")); flotante(FL, "house", tb, 1.5, { sp: 0.7 }); }
+    for (const dx of [-1, 1]) { const ch = pieza(g, X - 1.8 + dx * 1.2, 0.5, Z - 1.0); box(ch, 0.45, 0.06, 0.45, -dx * 0.05, -0.02, 0, lam("#2f86d6")); box(ch, 0.06, 0.5, 0.45, dx * 0.18, 0.25, 0, lam("#2f86d6")); flotante(FL, "house", ch, 1.9 + dx * 0.3, { sp: 1.6 }); }
     // living room: sofa, TV, lamp, rug, plant
-    const sofa = lam("#e85d5d"); box(g, 2.4, 0.45, 0.9, X + 3.0, 0.32, Z - 0.6, sofa); box(g, 2.4, 0.6, 0.25, X + 3.0, 0.7, Z - 0.15, sofa); box(g, 0.25, 0.6, 0.9, X + 1.85, 0.5, Z - 0.6, sofa); box(g, 0.25, 0.6, 0.9, X + 4.15, 0.5, Z - 0.6, sofa);
+    { const sofa = lam("#e85d5d"), sf = pieza(g, X + 3.0, 0.45, Z - 0.6); box(sf, 2.4, 0.45, 0.9, 0, -0.13, 0, sofa); box(sf, 2.4, 0.6, 0.25, 0, 0.25, 0.45, sofa); box(sf, 0.25, 0.6, 0.9, -1.15, 0.05, 0, sofa); box(sf, 0.25, 0.6, 0.9, 1.15, 0.05, 0, sofa); flotante(FL, "house", sf, 1.1, { sp: 0.35 }); }
     box(g, 2.0, 0.5, 0.5, X + 3.0, 0.25, Z - 3.9, lam("#7a4b2a")); box(g, 1.8, 1.0, 0.08, X + 3.0, 1.05, Z - 3.9, lam("#20202a"));
     R.tv = new THREE.MeshBasicMaterial({ color: "#7fd8ff" }); plane(g, 1.62, 0.86, X + 3.0, 1.05, Z - 3.85, R.tv).layers.set(NOINK);
     const rug = new THREE.Mesh(new THREE.CircleGeometry(1.6, 40).rotateX(-Math.PI / 2), lam({ map: ctex("rug", 256, 256, (gg) => { for (let r = 128; r > 0; r -= 18) { gg.fillStyle = ["#ff6fa3", "#ffd23f", "#2ed3c6", "#9b6bff"][(r / 18 | 0) % 4]; gg.beginPath(); gg.arc(128, 128, r, 0, 6.3); gg.fill(); } }) }));
     rug.position.set(X + 3.0, 0.01, Z - 2.2); rug.receiveShadow = true; g.add(rug);
-    cyl(g, 0.03, 0.03, 1.6, X + 4.8, 0.8, Z - 3.6, lam("#20202a")); R.lamp = new THREE.MeshBasicMaterial({ color: "#fff0b0" });
-    const shade = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.35, 16, 1, true), R.lamp); shade.position.set(X + 4.8, 1.7, Z - 3.6); g.add(shade);
-    cyl(g, 0.22, 0.18, 0.4, X - 3.2, 0.2, Z - 4.0, lam("#d8653a")); sph(g, 0.45, X - 3.2, 0.75, Z - 4.0, lam("#4fae4a"), 1, 1.2, 1);
+    { const lp = pieza(g, X + 4.8, 0.9, Z - 3.6); cyl(lp, 0.03, 0.03, 1.6, 0, -0.1, 0, lam("#20202a")); R.lamp = new THREE.MeshBasicMaterial({ color: "#fff0b0" });
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.35, 16, 1, true), R.lamp); shade.position.set(0, 0.8, 0); lp.add(shade); flotante(FL, "house", lp, 1.2, { sp: 1.2, dx: -0.5, dz: 0.6 }); }
+    { const pl = pieza(g, X - 3.2, 0.45, Z - 4.0); cyl(pl, 0.22, 0.18, 0.4, 0, -0.25, 0, lam("#d8653a")); sph(pl, 0.45, 0, 0.3, 0, lam("#4fae4a"), 1, 1.2, 1); flotante(FL, "house", pl, 1.6, { sp: 1.3, dz: 0.8 }); }
     // wall pictures
     for (const [px, c] of [[-2.4, "#9b6bff"], [-0.8, "#2ed3c6"]] as const) plane(g, 0.8, 0.6, X + px, 2.0, Z - 4.38, lam(c));
   }
@@ -97,12 +140,12 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
   {
     const g = groups.hospital, o = ORIGIN.hospital, [X, , Z] = o;
     room(g, o, 10, 8, 3.2, lam({ map: rep(floorTex("hospFloor", "#e8f4f2", "#cfe8e4"), 4, 4) }), "#bfeee6", "#9fd8f0", "#bfeee6");
-    box(g, 2.0, 0.5, 1.0, X - 1.5, 0.55, Z - 2.6, lam("#ffffff")); box(g, 2.0, 0.12, 1.02, X - 1.3, 0.85, Z - 2.6, lam("#2f86d6")); box(g, 0.1, 1.0, 1.0, X - 2.5, 0.8, Z - 2.6, lam("#9aa4b4"));
-    sph(g, 0.22, X - 2.2, 0.9, Z - 2.6, lam("#ffffff"), 1, 0.5, 1.4);
+    { const bd = pieza(g, X - 1.5, 0.7, Z - 2.6); box(bd, 2.0, 0.5, 1.0, 0, -0.15, 0, lam("#ffffff")); box(bd, 2.0, 0.12, 1.02, 0.2, 0.15, 0, lam("#2f86d6")); box(bd, 0.1, 1.0, 1.0, -1.0, 0.1, 0, lam("#9aa4b4"));
+      sph(bd, 0.22, -0.7, 0.2, 0, lam("#ffffff"), 1, 0.5, 1.4); flotante(FL, "hospital", bd, 1.3, { sp: 0.4, dz: 0.8 }); }
     cyl(g, 0.03, 0.03, 1.4, X - 0.2, 0.7, Z - 3.3, lam("#7a8090")); box(g, 0.9, 0.6, 0.1, X - 0.2, 1.6, Z - 3.3, lam("#20202a"));
     R.monitor = new THREE.MeshBasicMaterial({ map: ctex("ekg", 256, 128, (gg) => { gg.fillStyle = "#0a2a1a"; gg.fillRect(0, 0, 256, 128); gg.strokeStyle = "#3aff6a"; gg.lineWidth = 6; gg.beginPath(); gg.moveTo(0, 70); for (const [x, y] of [[60, 70], [80, 70], [92, 20], [104, 110], [116, 70], [180, 70], [192, 30], [204, 100], [216, 70], [256, 70]]) gg.lineTo(x, y); gg.stroke(); }) });
     plane(g, 0.82, 0.52, X - 0.2, 1.6, Z - 3.24, R.monitor).layers.set(NOINK);
-    cyl(g, 0.02, 0.02, 1.8, X - 2.8, 0.9, Z - 2.0, lam("#9aa4b4")); sph(g, 0.14, X - 2.8, 1.75, Z - 2.0, lam("#9fd8ff"), 1, 1.3, 0.5);
+    { const iv = pieza(g, X - 2.8, 0.9, Z - 2.0); cyl(iv, 0.02, 0.02, 1.8, 0, 0, 0, lam("#9aa4b4")); sph(iv, 0.14, 0, 0.85, 0, lam("#9fd8ff"), 1, 1.3, 0.5); flotante(FL, "hospital", iv, 1.0, { sp: 1.4, dx: 0.4, dz: 0.5 }); }
     // the generator keeping it alive
     const gen = lam("#ffd23f"); box(g, 1.6, 1.1, 1.0, X + 3.0, 0.55, Z - 2.8, gen); cyl(g, 0.08, 0.08, 1.0, X + 3.5, 1.5, Z - 3.0, lam("#5a5a66"));
     plane(g, 1.0, 0.4, X + 3.0, 0.75, Z - 2.28, new THREE.MeshBasicMaterial({ map: label("genLbl", "⚡ PLANTA", "#20202a", "#ffd23f") })).layers.set(NOINK);
@@ -122,15 +165,15 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
       box(g, 0.6, 2.2, 14, X + sx * 2.2, 1.1, Z - 8, lam("#c9ccd6"));
       for (let lv = 0; lv < 4; lv++) {
         box(g, 0.7, 0.05, 14, X + sx * 1.85, 0.35 + lv * 0.5, Z - 8, shelf, false);
-        const n = 50, inst = new THREE.InstancedMesh(prodGeo, new THREE.MeshLambertMaterial({ color: "#ffffff" }), n); const m = new THREE.Matrix4(), c = new THREE.Color();
-        for (let i = 0; i < n; i++) { m.makeTranslation(X + sx * 1.75, 0.53 + lv * 0.5, Z - 1.2 - i * 0.27); inst.setMatrixAt(i, m); inst.setColorAt(i, c.set(COLS[Math.floor(hh(i + lv * 50, sx + 3) * COLS.length)])); }
-        inst.castShadow = true; g.add(inst);
+        const n = 50, inst = new THREE.InstancedMesh(prodGeo, new THREE.MeshLambertMaterial({ color: "#ffffff" }), n); const m = new THREE.Matrix4(), c = new THREE.Color(), base: THREE.Vector3[] = [];
+        for (let i = 0; i < n; i++) { const v = new THREE.Vector3(X + sx * 1.75, 0.53 + lv * 0.5, Z - 1.2 - i * 0.27); base.push(v); m.makeTranslation(v.x, v.y, v.z); inst.setMatrixAt(i, m); inst.setColorAt(i, c.set(COLS[Math.floor(hh(i + lv * 50, sx + 3) * COLS.length)])); }
+        inst.castShadow = true; inst.frustumCulled = false; g.add(inst); R.storeProds.push({ inst, base, sx, last: 0 });
       }
     }
     for (let k = 0; k < 4; k++) { const lm = new THREE.MeshBasicMaterial({ color: "#ffffff" }); R.storeLights.push(lm); const l = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.06, 2.2), lm); l.position.set(X, 3.2, Z - 2 - k * 4); l.layers.set(NOINK); g.add(l); }
     plane(g, 2.2, 0.6, X - 1.9, 2.6, Z - 3, new THREE.MeshBasicMaterial({ map: label("pilas", "🔋 PILAS", "#ffd23f", "#20202a") }), Math.PI / 2).layers.set(NOINK);
     plane(g, 2.2, 0.6, X + 1.9, 2.6, Z - 7, new THREE.MeshBasicMaterial({ map: label("velas", "🕯 VELAS", "#ff6fa3", "#ffffff") }), -Math.PI / 2).layers.set(NOINK);
-    box(g, 1.6, 0.9, 0.7, X + 3.6, 0.45, Z + 1.0, lam("#e62117")); // checkout
+    flotante(FL, "store", box(g, 1.6, 0.9, 0.7, X + 3.6, 0.45, Z + 1.0, lam("#e62117")), 0.9, { sp: 0.3 }); // checkout
   }
   // ================= classroom =================
   {
@@ -142,9 +185,13 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
       gg.beginPath(); gg.arc(720, 200, 120, 0, 6.3); gg.stroke(); gg.beginPath(); gg.moveTo(720, 200); gg.lineTo(720, 110); gg.moveTo(720, 200); gg.lineTo(790, 230); gg.stroke();
       gg.fillStyle = "#f4f1ea"; gg.font = "bold 64px Arial"; gg.fillText("24 h", 870, 120); gg.fillText("22 h?", 860, 330);
     }) })).layers.set(NOINK);
-    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { const x = X - 3.3 + c * 2.2, z = Z - 0.2 + r * 1.6; box(g, 1.0, 0.06, 0.6, x, 0.72, z, lam(["#ff9a3c", "#2f86d6", "#ff6fa3", "#6bd36b"][(r + c) % 4])); for (const dx of [-0.42, 0.42]) cyl(g, 0.03, 0.03, 0.72, x + dx, 0.36, z, lam("#5a5a66")); }
-    box(g, 1.8, 0.8, 0.8, X + 3.2, 0.4, Z - 3.2, lam("#b97d4a"));
-    const globe = new THREE.Group(); globe.position.set(X + 3.0, 1.15, Z - 3.2); g.add(globe);
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+      const x = X - 3.3 + c * 2.2, z = Z - 0.2 + r * 1.6, dk = pieza(g, x, 0.38, z);
+      box(dk, 1.0, 0.06, 0.6, 0, 0.34, 0, lam(["#ff9a3c", "#2f86d6", "#ff6fa3", "#6bd36b"][(r + c) % 4])); for (const dx of [-0.42, 0.42]) cyl(dk, 0.03, 0.03, 0.72, dx, -0.02, 0, lam("#5a5a66"));
+      flotante(FL, "classroom", dk, [1.4 + hh(r * 4 + c, 61) * 1.2, 0.9 + hh(r * 4 + c, 61) * 0.6, 0.45 + hh(r * 4 + c, 61) * 0.35][r], { sp: r === 2 ? 0.6 : 1.2 }); // la fila de adelante sube menos (no tapa la cámara)
+    }
+    flotante(FL, "classroom", box(g, 1.8, 0.8, 0.8, X + 3.2, 0.4, Z - 3.2, lam("#b97d4a")), 0.8, { sp: 0.3, dz: 0.5 });
+    const globe = new THREE.Group(); globe.position.set(X + 3.0, 1.15, Z - 3.2); g.add(globe); flotante(FL, "classroom", globe, 1.4, { sp: 1.5, dx: -0.8, dz: 0.9 });
     cyl(globe, 0.12, 0.18, 0.08, 0, -0.33, 0, lam("#7a4b2a"));
     const gm = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 16), lam({ map: ctex("globeTex", 256, 128, (gg) => { gg.fillStyle = "#2f86d6"; gg.fillRect(0, 0, 256, 128); gg.fillStyle = "#6bd36b"; for (const [x, y, w, h] of [[30, 30, 50, 40], [110, 50, 40, 60], [170, 30, 60, 40], [200, 80, 30, 30]]) gg.fillRect(x, y, w, h); }) })); globe.add(gm); R.globe = gm;
     const wm = new THREE.MeshBasicMaterial({ color: "#8fd0ff" }); R.windows.push(wm); plane(g, 0.05, 1, X + 5.38, 1.9, Z - 1, wm);
@@ -212,7 +259,7 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
     const post = lam("#b97d4a");
     for (let k = 0; k < 20; k++) { cyl(g, 0.07, 0.07, 1.1, X - 12 + k * 1.6, 0.55, Z - 6, post, 6); }
     box(g, 32, 0.08, 0.06, X + 3.2, 0.8, Z - 6, post); box(g, 32, 0.08, 0.06, X + 3.2, 0.45, Z - 6, post);
-    for (let k = 0; k < 6; k++) { const h = cyl(g, 0.6, 0.6, 1.0, X - 6 + k * 2.2, 0.6, Z - 10 - (k % 2) * 1.5, lam("#f2c94c"), 16); h.rotation.z = Math.PI / 2; }
+    for (let k = 0; k < 6; k++) { const h = cyl(g, 0.6, 0.6, 1.0, X - 6 + k * 2.2, 0.6, Z - 10 - (k % 2) * 1.5, lam("#f2c94c"), 16); h.rotation.z = Math.PI / 2; flotante(FL, "farm", h, 2.5 + hh(k, 81) * 2.5, { sp: 1.4 }); }
     for (let k = 0; k < 10; k++) { const t = new THREE.Group(); t.position.set(X - 40 + k * 9, 0, Z - 40 - (k % 3) * 6); const tr = cyl(t, 0.2, 0.3, 2.6, 0, 1.3, 0, lam("#7a5236")); void tr; sph(t, 1.6, 0, 3.6, 0, lam("#4fae4a")); g.add(t); }
   }
   // ================= gym: piso de goma, espejo, mancuernas, barra con discos, banco, caminadoras, saco y báscula =================
@@ -256,19 +303,23 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
     const hexGeo = new THREE.CylinderGeometry(1, 1, 1, 6);
     for (let lv = 0; lv < 2; lv++) for (let i = 0; i < 7; i++) {
       const r = 0.07 + i * 0.012 + lv * 0.02, z = Z - 3.5 + i * 0.62, y = (lv ? 0.99 : 0.49) + r, x = X - (lv ? 6.5 : 6.4), cm = lam(COL[i]);
-      const hnd = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.34, 8), steel); hnd.rotation.x = Math.PI / 2; hnd.position.set(x, y, z); g.add(hnd);
-      for (const s of [-1, 1]) { const hd = new THREE.Mesh(hexGeo, cm); hd.scale.set(r, 0.1, r); hd.rotation.x = Math.PI / 2; hd.position.set(x, y, z + s * 0.2); hd.castShadow = true; g.add(hd); }
+      const db = pieza(g, x, y, z);
+      const hnd = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.34, 8), steel); hnd.rotation.x = Math.PI / 2; db.add(hnd);
+      for (const s of [-1, 1]) { const hd = new THREE.Mesh(hexGeo, cm); hd.scale.set(r, 0.1, r); hd.rotation.x = Math.PI / 2; hd.position.set(0, 0, s * 0.2); hd.castShadow = true; db.add(hd); }
+      flotante(FL, "gym", db, 0.9 + hh(i + lv * 7, 91) * 1.4, { sp: 2.0, dx: 0.8 + hh(i, 92) * 1.2 });
     }
     // banco con barra y discos de colores
     const pad = lam("#e84a4a");
     box(g, 0.5, 0.14, 1.6, X - 2.6, 0.5, Z - 2.6, pad); box(g, 0.12, 0.43, 0.12, X - 2.6, 0.22, Z - 2.0, dark); box(g, 0.12, 0.43, 0.12, X - 2.6, 0.22, Z - 3.2, dark);
     for (const s of [-1, 1]) { box(g, 0.08, 1.25, 0.08, X - 2.6 + s * 0.55, 0.62, Z - 3.35, dark); box(g, 0.14, 0.06, 0.18, X - 2.6 + s * 0.55, 1.15, Z - 3.27, dark); }
-    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2, 10), steel); bar.rotation.z = Math.PI / 2; bar.position.set(X - 2.6, 1.22, Z - 3.27); bar.castShadow = true; g.add(bar);
-    const disc = (x: number, y: number, z: number, r: number, c: string, rotZ = true) => { const d = cyl(g, r, r, 0.07, x, y, z, lam(c), 24); if (rotZ) d.rotation.z = Math.PI / 2; else d.rotation.x = Math.PI / 2; return d; };
-    for (const s of [-1, 1]) { disc(X - 2.6 + s * 0.78, 1.22, Z - 3.27, 0.36, "#e84a4a"); disc(X - 2.6 + s * 0.86, 1.22, Z - 3.27, 0.3, "#2f86d6"); disc(X - 2.6 + s * 0.93, 1.22, Z - 3.27, 0.22, "#ffd23f"); }
+    const bb = pieza(g, X - 2.6, 1.22, Z - 3.27);
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2, 10), steel); bar.rotation.z = Math.PI / 2; bar.castShadow = true; bb.add(bar);
+    const disc = (gg: THREE.Object3D, x: number, y: number, z: number, r: number, c: string, rotZ = true) => { const d = cyl(gg, r, r, 0.07, x, y, z, lam(c), 24); if (rotZ) d.rotation.z = Math.PI / 2; else d.rotation.x = Math.PI / 2; return d; };
+    for (const s of [-1, 1]) { disc(bb, s * 0.78, 0, 0, 0.36, "#e84a4a"); disc(bb, s * 0.86, 0, 0, 0.3, "#2f86d6"); disc(bb, s * 0.93, 0, 0, 0.22, "#ffd23f"); }
+    flotante(FL, "gym", bb, 0.9, { sp: 0.6, dz: 1.0 });
     // árbol de discos
     cyl(g, 0.04, 0.04, 1.3, X - 4.4, 0.65, Z - 4.2, dark, 8); box(g, 0.7, 0.06, 0.5, X - 4.4, 0.03, Z - 4.2, dark);
-    [["#6bd36b", 0.28], ["#ffd23f", 0.34], ["#2f86d6", 0.4]].forEach(([c, r], i) => disc(X - 4.4, 0.5 + i * 0.03, Z - 4.2 + 0.06 + i * 0.07, r as number, c as string, false));
+    [["#6bd36b", 0.28], ["#ffd23f", 0.34], ["#2f86d6", 0.4]].forEach(([c, r], i) => flotante(FL, "gym", disc(g, X - 4.4, 0.5 + i * 0.03, Z - 4.2 + 0.06 + i * 0.07, r as number, c as string, false), 1.0 + i * 0.6, { sp: 1.5, dx: 0.3 * i, dz: 1.0 + i * 0.4 }));
     // caminadoras (pared derecha, mirando al espejo) con banda que avanza
     const belt = ctex("gymBelt", 64, 256, (gg) => { gg.fillStyle = "#26262e"; gg.fillRect(0, 0, 64, 256); gg.fillStyle = "#3a3a46"; for (let y = 0; y < 256; y += 32) gg.fillRect(0, y, 64, 10); });
     belt.wrapS = belt.wrapT = THREE.RepeatWrapping; R.gymBelt = belt;
@@ -304,9 +355,16 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
     const nd = new THREE.Mesh(new THREE.PlaneGeometry(0.025, 0.26), new THREE.MeshBasicMaterial({ color: "#e84a4a" })); nd.position.y = 0.11; nd.layers.set(NOINK); needle.add(nd);
     const hub = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({ color: "#241726" })); hub.position.z = 0.002; hub.layers.set(NOINK); needle.add(hub);
     // pesas rusas, botellas y una banca de madera
-    [["#2f86d6", -4.6], ["#ffd23f", -4.1], ["#6bd36b", -3.6]].forEach(([c, dx]) => { const kx = X + (dx as number), kz = Z + 0.6; sph(g, 0.17, kx, 0.17, kz, lam(c as string)); const hd = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 8, 16, Math.PI), dark); hd.position.set(kx, 0.33, kz); g.add(hd); });
+    [["#2f86d6", -4.6], ["#ffd23f", -4.1], ["#6bd36b", -3.6]].forEach(([c, dx], i) => { const kb = pieza(g, X + (dx as number), 0.2, Z + 0.6); sph(kb, 0.17, 0, -0.03, 0, lam(c as string)); const hd = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 8, 16, Math.PI), dark); hd.position.set(0, 0.13, 0); kb.add(hd); flotante(FL, "gym", kb, 1.3 + i * 0.5, { sp: 1.8, dz: -0.3 }); });
     box(g, 1.8, 0.08, 0.45, X + 0.2, 0.45, Z - 4.4, lam("#b97d4a")); for (const dx of [-0.75, 0.75]) box(g, 0.08, 0.42, 0.4, X + 0.2 + dx, 0.21, Z - 4.4, dark);
-    ["#2f86d6", "#ff6fa3", "#6bd36b"].forEach((c, i) => cyl(g, 0.045, 0.045, 0.24, X - 0.2 + i * 0.25, 0.61, Z - 4.4, lam(c), 10));
+    ["#2f86d6", "#ff6fa3", "#6bd36b"].forEach((c, i) => flotante(FL, "gym", cyl(g, 0.045, 0.045, 0.24, X - 0.2 + i * 0.25, 0.61, Z - 4.4, lam(c), 10), 1.2 + i * 0.4, { sp: 2.5, dz: 0.8 }));
+  }
+  // ================= beach (sin gravedad): gotas y burbujas de mar que suben =================
+  {
+    const g = groups.beach, BX = -400, N = 90, base: SetRefs["drops"]["base"] = [];
+    for (let i = 0; i < N; i++) base.push({ x: BX - 14 + hh(i, 101) * 28, z: -9 + hh(i, 102) * 12.5, h: 1.2 + hh(i, 103) * 5.5, r: i % 9 === 0 ? 0.45 + hh(i, 104) * 0.4 : 0.1 + hh(i, 105) * 0.2, ph: hh(i, 106) * 6.283 });
+    const inst = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 12), lam({ color: "#5fc4ff", emissive: new THREE.Color("#1a5a8a"), transparent: true, opacity: 0.85 }), N);
+    inst.castShadow = true; inst.frustumCulled = false; inst.visible = false; g.add(inst); R.drops = { inst, base };
   }
   return R;
 };
@@ -331,4 +389,26 @@ export const updateSets = (R: SetRefs, S: SceneState, f: number) => {
   R.gymNeedle.rotation.z = -(-0.75 * Math.PI + b * 1.5 * Math.PI) + (b > 0 ? Math.sin(t * 9) * 0.02 : 0);
   R.gymBag.rotation.z = Math.sin(t * 3.2) * 0.22 * (S.saco ?? 0); R.gymBag.rotation.x = Math.cos(t * 2.6) * 0.08 * (S.saco ?? 0);
   R.gymBelt.offset.y = (t * (S.cinta ?? 0)) / 1.85;
+  // sin gravedad: productos del súper que salen de los estantes y agua del mar que sube en gotas
+  const fl = Math.max(0, S.flota ?? 0), w = Math.min(1, fl), m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1, 1, 1), v = new THREE.Vector3();
+  if (S.set === "store") for (const P of R.storeProds) {
+    if (fl === 0 && P.last === 0) continue;
+    P.base.forEach((b, i) => {
+      const ph = hh(i + b.y * 10, P.sx + 7) * 6.283;
+      v.set(b.x - P.sx * w * (0.3 + hh(i, P.sx + 11) * 0.9), b.y + fl * (0.5 + hh(i, P.sx + 12) * 1.2) + w * Math.sin(t * 1.5 + ph) * 0.08, b.z + w * Math.sin(t * 0.7 + ph) * 0.15);
+      e.set(w * Math.sin(t + ph) * 1.2, w * (t * 0.8 + ph), w * Math.cos(t * 0.8 + ph)); q.setFromEuler(e);
+      P.inst.setMatrixAt(i, m.compose(v, q, sc.set(1, 1, 1)));
+    });
+    P.inst.instanceMatrix.needsUpdate = true; P.last = fl;
+  }
+  R.drops.inst.visible = S.set === "beach" && fl > 0.01;
+  if (R.drops.inst.visible) {
+    const tide = S.tide ?? 0;
+    R.drops.base.forEach((b, i) => {
+      const up = Math.min(1, fl * (0.6 + 0.4 * hh(i, 107))), s = b.r * Math.min(1, fl * 3) * (1 + 0.08 * Math.sin(t * 4 + b.ph));
+      v.set(b.x + Math.sin(t * 0.6 + b.ph) * 0.3, tide + up * b.h + Math.sin(t * 1.3 + b.ph) * 0.15, b.z);
+      R.drops.inst.setMatrixAt(i, m.compose(v, q.identity(), sc.set(s, s * 1.08, s)));
+    });
+    R.drops.inst.instanceMatrix.needsUpdate = true;
+  }
 };

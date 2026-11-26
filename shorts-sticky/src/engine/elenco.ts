@@ -64,3 +64,13 @@ export const MICHI = { coat: "#8a8a94" } as const;
 
 // Nombres cortos que ya usaban los primeros videos (no borrar).
 export const MOM = MAMA, DAD = PAPA, KID = NINO, GRANNY = ABUELA, FARMER = GRANJERO;
+
+// ---------- Cameo: invitado especial (ver engine/cameo.ts y BIBLIA/PERSONAJES.md) ----------
+/** quien sostiene el marco del cameo por defecto: playera amarilla, gorra roja, alegre */
+export const INVITADO: PersonOpts = { expr: "happy", hat: "cap", hatCol: "#d84a3a", ropa: "tee", shirt: "#f2b632", pants: "#3b5b9a", shoes: "#d84a3a" };
+/** tarjeta de cameo (tarjeta ancha): una persona del elenco sostiene el marco con la foto y el @nombre del invitado.
+ *  `pos` es el centro de la tarjeta en el piso; ocupa ~2.9 m de ancho (escala adulto). */
+export const cameo = (f: number, c: { foto: string; nombre: string }, pos: V3, quien: PersonOpts = INVITADO, o: { expr?: Expr; saluda?: boolean } = {}): Card => ({
+  kind: "cameo", o: { foto: c.foto, nombre: c.nombre, quien: { ...quien, blink: blinkAt(f, 7) }, expr: o.expr, saluda: o.saluda, brillo: Math.floor(f / 3) % 4 / 4 + 0.1 },
+  x: pos[0], z: pos[2], y: pos[1] || undefined, s: ESCALA.adulto,
+});

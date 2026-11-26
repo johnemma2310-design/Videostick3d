@@ -54,7 +54,7 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 - Entre 45 y 60 segundos más el cierre.
 - Gancho en la primera frase (la pregunta del título).
 - Datos reales y verificables, y al menos un dato sorprendente.
-- **Termina siempre con el cierre:** "Si quieres saber más, suscríbete y déjame en los comentarios qué más quieres saber". El cierre ya está hecho en `shorts-sticky/out/outro_final.mp4` y `RENDERIZAR.bat` lo pega solo.
+- **Termina siempre con el cierre:** "Si quieres saber más, suscríbete, dale like y déjame en los comentarios qué más quieres saber. ¡Y el último en comentar en mi video largo sale en el próximo short, con su foto y su nombre!". El cierre ya está hecho en `shorts-sticky/out/outro_final.mp4` y `RENDERIZAR.bat` lo pega solo.
 
 ## Revisión antes de dar un video por terminado
 
@@ -65,6 +65,6 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 - [ ] Revisar fotos sueltas con `node scripts/fotos.mjs <Comp> rev <frames>` y una hoja de contacto
 - [ ] Subtítulos sin solaparse y bien sincronizados con la voz
 - [ ] Volumen en -14 LUFS (`ffmpeg -i video.mp4 -af ebur128 -f null -`)
-- [ ] El cierre "suscríbete y comenta" está al final
+- [ ] El cierre (suscríbete, like, comenta y cameo) está al final
 - [ ] La carpeta del video tiene el `.mp4` y el `PUBLICAR.txt` (título calificado en vidIQ, descripción, hashtags y tags)
 - [ ] Código y `PUBLICAR.txt` subidos a GitHub (`SINCRONIZAR.bat`)
