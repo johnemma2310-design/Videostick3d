@@ -18,3 +18,10 @@ referencias/
 
 # Permisos locales de Claude Code (no subir)
 .claude/settings.local.json
+
+# Claves y datos de YouTube (NUNCA subir)
+*youtube*.json
+*client_secret*.json
+token*.json
+.env
+secretos/
