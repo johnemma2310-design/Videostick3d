@@ -5,20 +5,29 @@ import { APAGON } from "./videos/apagon";
 import { LUNA } from "./videos/luna";
 import { ROTACION } from "./videos/rotacion";
 import { OUTRO } from "./videos/outro";
-import { FichaSticky, FichaElenco, FichaAnimales, FichaMovimiento } from "./videos/ficha";
+import { OUTRO_H } from "./videos/outroH";
+import { PRUEBAH } from "./videos/pruebaH";
+import { dims } from "./engine/types";
+import { FichaSticky, FichaElenco, FichaAnimales, FichaMovimiento, FichaMusculo } from "./videos/ficha";
 const Apagon = makeShort(APAGON);
 const Luna = makeShort(LUNA);
 const Rotacion = makeShort(ROTACION);
 const Outro = makeShort(OUTRO);
+const OutroH = makeShort(OUTRO_H);
+const PruebaH = makeShort(PRUEBAH);
 export const Root: React.FC = () => (
   <>
     <Composition id="Apagon" component={Apagon} durationInFrames={APAGON.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Luna" component={Luna} durationInFrames={LUNA.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Rotacion" component={Rotacion} durationInFrames={ROTACION.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Outro" component={Outro} durationInFrames={OUTRO.TOTAL} fps={30} width={1080} height={1920} />
+    {/* horizontales 1920x1080 (videos largos): el tamaño sale del `formato` de la historia */}
+    <Composition id="OutroH" component={OutroH} durationInFrames={OUTRO_H.TOTAL} fps={30} {...dims(OUTRO_H)} />
+    <Composition id="PruebaH" component={PruebaH} durationInFrames={PRUEBAH.TOTAL} fps={30} {...dims(PRUEBAH)} />
     <Composition id="FichaSticky" component={FichaSticky} durationInFrames={1} fps={30} width={1800} height={3200} />
     <Composition id="FichaElenco" component={FichaElenco} durationInFrames={1} fps={30} width={2400} height={3240} />
     <Composition id="FichaAnimales" component={FichaAnimales} durationInFrames={1} fps={30} width={2400} height={3240} />
+    <Composition id="FichaMusculo" component={FichaMusculo} durationInFrames={1} fps={30} width={6000} height={3280} />
     <Composition id="FichaMovimiento" component={FichaMovimiento} durationInFrames={1} fps={30} width={4800} height={5000} />
   </>
 );

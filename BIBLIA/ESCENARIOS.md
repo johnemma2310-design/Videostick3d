@@ -18,6 +18,21 @@ Para ubicar algo dentro de un escenario, usa `at(ORIGIN.house, x, y, z)`.
 | `desert` | 0, 0, -450 | Dunas, mesetas, cactus y un observatorio con cúpula | Apagón, Luna |
 | `reef` | -400, 0, 450 | Corales y algas; `spawn` es el desove de corales | Luna |
 | `farm` | 400, 0, 450 | Surcos, granero rojo, silo, cerca y paja | Luna, Rotación |
+| `gym` | 300, 0, 800 | Gimnasio de colores: piso de goma con motitas, tapetes de colores, espejo grande, rack de mancuernas, banco con barra y discos, árbol de discos, 2 caminadoras, saco de boxeo, pesas rusas, báscula grande y carteles (¡TÚ PUEDES!, SIN EXCUSAS, ¡UNA MÁS!, TOMA AGUA). Flags `bascula`, `saco`, `cinta` | Músculo (prueba `PruebaH`) |
+
+### Gimnasio (`gym`): dónde está cada cosa
+
+Cuarto de 14 × 10 m (paredes naranja, celeste y rosa con `emissive 0.45`). Todo con `at(ORIGIN.gym, x, y, z)`:
+
+| Cosa | Posición local | Notas |
+|---|---|---|
+| Zona libre (tapetes) | x −4..2, z −4.4..−0.4 | Buen lugar para Sticky y extras; la cámara mira hacia −z |
+| Espejo | fondo, x −3.9..2.7, y 0.9..3 | Mapa pintado (sin reflejo real) |
+| Mancuernas | pared izquierda, x −6.4, z −3.5..0.3 | 7 colores, dos niveles |
+| Banco con barra | x −2.6, z −2..−3.3 | Barra a 1.22 m con discos rojo/azul/amarillo |
+| Caminadoras | x 5.3, z −3 y −0.6 | Sobre la banda pon la tarjeta con `y: 0.22`. `cinta` = velocidad de la banda (m/s) |
+| Saco de boxeo | x 2.75, z −4.1 | `saco` 0..1 = cuánto se balancea |
+| Báscula grande | plataforma en x 2.3, z 0.9 (párate con `y: 0.125`) | Carátula 0–200 kg; `bascula` 0..1 mueve la aguja (0.5 ≈ 100 kg). Para ver la carátula al lado de Sticky, pon la cámara de lado (ver `pruebaH.ts`, toma 3) |
 
 ## Ambientes (`env`)
 

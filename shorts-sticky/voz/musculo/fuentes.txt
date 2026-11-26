@@ -1,0 +1,14 @@
+FUENTES (no se lee en voz)
+- Ganancia natural de músculo ~0.5-1 kg/mes en el mejor caso (entrenamiento serio): revisiones de hipertrofia, p. ej. Aragon et al., "Evidence-based guidelines for muscle gain"; consenso en ciencia del ejercicio.
+- Músculo esquelético ~75% agua: Heymsfield et al., composición corporal; Gray's/Fisiología (tejido muscular ~73-76% agua).
+- ~13 kcal/kg/día en reposo para músculo esquelético: Wang et al. 2010, "Specific metabolic rates of major organs and tissues", Am J Clin Nutr (13 kcal/kg/día).
+- Costo de construir 1 kg de músculo, del orden de miles de kcal (cifra aproximada, varía según el método): Hall 2008, "Computational model of in vivo human energy metabolism"; Elia 1992. Se usa solo "entre 2,500 y 5,000" como orden de magnitud.
+- Miostatina (MSTN): Schuelke et al. 2004, "Myostatin mutation associated with gross muscle hypertrophy in a child", N Engl J Med 350:2682. Toros Belgian Blue: McPherron y Lee 1997, PNAS 94:12457 (mutación en MSTN).
+- Ascensores: capacidad calculada a ~75 kg por persona, EN 81-20 / ISO 4190-1.
+- Persona más pesada documentada: Jon Brower Minnoch, ~635 kg (1,400 lb), Guinness World Records.
+- Carga viva de piso residencial ~1.9 kPa (40 psf, ~195 kg/m2): ASCE 7 / códigos de construcción (se dice "unos doscientos").
+- Récord de peso muerto ~501 kg: Hafthor Björnsson, 2020 (Guinness / Strongman).
+- Rabdomiólisis: ruptura de fibras musculares, liberación de mioglobina, riesgo renal: revisiones clínicas (p. ej. Bosch et al., NEJM 2009).
+- Estrías: rotura de dermis por estiramiento rápido de la piel (distensión rápida/crecimiento): dermatología básica (AAD).
+- Cálculos propios: 24 kg/día; 168 kg en 7 días; 336 en 14; 720 en 30 (24 x 30); 720 x 13 kcal = 9,360 kcal/día; 300 x 13 = 3,900. Peso inicial de Sticky supuesto: 70 kg (ficción).
+- Dato de ficción: nada de la historia de Sticky es real; solo las cifras anteriores.

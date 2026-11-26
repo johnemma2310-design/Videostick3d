@@ -1,12 +1,18 @@
 # Mezcla voz + música + efectos sintetizados para los shorts de Sticky. Uso:
-#   python -I audio/mezcla.py apagon|luna|rotacion public/voz_<x>.wav out/<x>_mezcla.wav
+#   python -I audio/mezcla.py apagon|luna|rotacion public/voz_<x>.wav out/<x>_mezcla.wav [out/<x>_mudo.mp4]
+# Un video sin entrada propia aquí (p. ej. musculo) usa una mezcla genérica (música alegre + pads suaves) y toma la
+# duración del 4.º argumento (el video mudo) con ffprobe.
 import subprocess, sys
 from functools import lru_cache
 import numpy as np
 
 SR = 48000
 name, voz_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-TOTAL = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "outro": 170}[name]
+KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "outro": 170}
+def frames_of(path):
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path], capture_output=True, text=True, check=True).stdout
+    return int(round(float(out.strip()) * 30))
+TOTAL = KNOWN[name] if name in KNOWN else frames_of(sys.argv[4])
 L = TOTAL / 30; N = int(SR * L)
 rng = np.random.default_rng(7)
 F = lambda f: f / 30
@@ -117,6 +123,13 @@ elif name == "outro":
     put(sfx, tone(2400, 0.04, 0.0005, 0.01), F(58), -10)           # click
     for k in range(3): put(sfx, chime(1568 + 300 * k, 0.8), F(60) + k * 0.08, -16)  # bell
     put(sfx, tone(660, 0.12, 0.001, 0.05), F(80), -14)             # comment bubble
+elif name != "rotacion":
+    # genérica para videos nuevos (largos): música alegre suave con descansos de pad cada ~40 s y un golpe en cada corte
+    t0 = 0.0
+    while t0 < L:
+        t1 = min(L, t0 + 40); happy(t0, t1, -24)
+        if t1 < L: pad(SPACE, t1 - 1, min(L, t1 + 8), -26, 1.0); put(sfx, whoosh(1.0, 0.5), t1 - 0.5, -20)
+        t0 = t1 + 8
 else:
     happy(0, F(66), -21)
     put(sfx, boom(1.6, 70, 30, 0.5), F(40), -10); put(sfx, crowd_gasp(1.4), F(66), -14); put(sfx, whoosh(1.4, 0.3, 4), F(66), -10)

@@ -109,3 +109,31 @@ export const FichaMovimiento: React.FC = () => {
   }, []);
   return <AbsoluteFill><canvas ref={ref} width={4800} height={5000} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
 };
+
+// Ficha de Sticky musculoso: columnas musc 0, 2, 4, 6, 8, 10 (tarjeta ancha de 1000). Fila 1 parado, fila 2 saca bíceps,
+// fila 3 camina / corre / habla / mancuerna. node scripts/fotos.mjs FichaMusculo out/musc_ 0 0.2
+const MUSC = [0, 2, 4, 6, 8, 10];
+export const FichaMusculo: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current!, g = c.getContext("2d")!;
+    g.fillStyle = "#e8f4ff"; g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = "#9cb4d0"; g.lineWidth = 4;
+    for (let r = 0; r < 3; r++) { g.beginPath(); g.moveTo(0, r * 1060 + 995); g.lineTo(c.width, r * 1060 + 995); g.stroke(); }
+    const ROW3: { o: Partial<import("../engine/stick").StickyOpts> }[] = [
+      { o: { walk: 0.25 } }, { o: { walk: 0.5 } }, { o: { walk: 0.25, run: true, expr: "shock" } }, { o: { walk: 0.75, run: true, expr: "shock" } }, { o: { talk: 2, expr: "smile" } }, { o: { arm: "curl", expr: "happy" } },
+    ];
+    MUSC.forEach((mu, i) => {
+      const cell = (row: number, o: Partial<import("../engine/stick").StickyOpts>) => {
+        g.save(); g.translate(i * 1000 + 200, row * 1060 + 20);
+        sticky(new Pen(g), { expr: "smile", arm: "down", scarf: 0.3, musc: mu, ...o });
+        g.restore();
+      };
+      cell(0, {});
+      cell(1, { arm: "flex", expr: "happy" });
+      cell(2, ROW3[i].o);
+      g.fillStyle = "#241726"; g.font = "bold 56px Arial"; g.textAlign = "center"; g.fillText(`musc ${mu}`, i * 1000 + 500, 3240);
+    });
+  }, []);
+  return <AbsoluteFill><canvas ref={ref} width={6000} height={3280} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
+};

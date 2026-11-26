@@ -50,6 +50,9 @@ export const SU = 0.00216; // metres per design unit: 1000 units = 2.16 m
 export const BODY = (() => { const g = new THREE.PlaneGeometry(600 * SU, 1000 * SU); g.translate(0, (975 - 500) * SU, 0); return g; })();
 /** wide cards (horses, elephants, chariots): 2000 x 1400 design, ground at y = 1375 */
 export const WIDE = (() => { const g = new THREE.PlaneGeometry(2000 * SU, 1400 * SU); g.translate(0, (1375 - 700) * SU, 0); return g; })();
+/** tarjeta extra ancha (Sticky musculoso): 1000 x 1000, el dibujo de 600 x 1000 va corrido XSHIFT a la derecha; mismos pies */
+export const XSHIFT = 200;
+export const XBODY = (() => { const g = new THREE.PlaneGeometry(1000 * SU, 1000 * SU); g.translate(0, (975 - 500) * SU, 0); return g; })();
 const CARD = new THREE.PlaneGeometry(1, 1);
 
 export class Actor {
@@ -90,13 +93,15 @@ export class Fx {
   }
 }
 
-export type Place = { key: string; draw: (p: Pen) => void; x: number; y: number; z: number; scale?: number; mirror?: boolean; wide?: boolean; size: [number, number, number] };
+export type Place = { key: string; draw: (p: Pen) => void; x: number; y: number; z: number; scale?: number; mirror?: boolean; wide?: boolean; xbody?: boolean; size: [number, number, number] };
 export type FxPlace = { key: string; cw: number; ch: number; draw: (p: Pen) => void; x: number; y: number; z: number; w: number; h: number; flat?: boolean; rot?: number; soft?: boolean; lean?: number };
 export type Stage = { places: Place[]; fx: FxPlace[] };
 
 /** drawing resolution by distance: [canvas w, h, scale from the 600 x 1000 design] */
 export const tier = (d: number): [number, number, number] =>
   d < 3.2 ? [1800, 3000, 3.0] : d < 6.5 ? [1080, 1800, 1.8] : d < 16 ? [480, 800, 0.8] : d < 40 ? [240, 400, 0.4] : [120, 200, 0.2];
+/** igual que tier() pero para la tarjeta XBODY (1000 de ancho) */
+export const tierX = (d: number): [number, number, number] => { const [w, h, k] = tier(d); return [Math.round((w * 1000) / 600), h, k]; };
 export const tierW = (d: number): [number, number, number] =>
   d < 7 ? [3000, 2100, 1.5] : d < 16 ? [1400, 980, 0.7] : d < 40 ? [700, 490, 0.35] : [300, 210, 0.15];
 

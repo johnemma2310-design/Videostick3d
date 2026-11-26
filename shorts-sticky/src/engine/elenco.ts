@@ -20,9 +20,9 @@ export const PALETA = {
 export const bufanda = (f: number) => Math.floor((((f / 30) * 1.3) % 1) * 8) / 8;
 
 /** Sticky, el protagonista: cabeza blanca grande y bufanda azul. Siempre al frente y sin nada tapándolo. */
-export const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: Look = [0, 0], walk?: number): Card => ({
+export const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: Look = [0, 0], walk?: number, musc?: number): Card => ({
   kind: "sticky",
-  o: { expr, arm, look, walk, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: bufanda(f) },
+  o: { expr, arm, look, walk, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: bufanda(f), musc },
   x: pos[0], z: pos[2], y: pos[1] || undefined, s: ESCALA.sticky,
 });
 

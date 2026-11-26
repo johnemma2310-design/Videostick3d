@@ -6,7 +6,7 @@ import { Pen, INK, shade, mix } from "./toon";
 type P2 = [number, number];
 const WHITE = "#ffffff", MOUTH = "#5a1e28";
 export type Expr = "neutral" | "smile" | "lick" | "shock" | "sad" | "scream" | "happy" | "worried" | "shiver" | "frozen" | "relief" | "sleep";
-export type Arm = "down" | "icecream" | "up" | "cheer" | "wave" | "phone" | "candle" | "flash" | "point" | "fly" | "hug" | "cover";
+export type Arm = "down" | "icecream" | "up" | "cheer" | "wave" | "phone" | "candle" | "flash" | "point" | "fly" | "hug" | "cover" | "flex" | "curl";
 export type Look = [number, number];
 
 // ---------------- shared face ----------------
@@ -45,6 +45,7 @@ const armPose = (arm: Arm, sho: P2, side: number, ph: number, k: number): [P2, P
     case "cheer": return [[sx + s * 90 * k, sy - 90 * k], [sx + s * 120 * k, sy - 200 * k + Math.sin(ph * 6.28) * 20 * k]];
     case "cover": return [[sx + s * 80 * k, sy - 20 * k], [sx + s * 20 * k, sy - 120 * k]];
     case "hug": return [[sx + s * 60 * k, sy + 70 * k], [sx - s * 40 * k, sy + 60 * k]];
+    case "flex": return [[sx + s * 115 * k, sy + 15 * k], [sx + s * 100 * k, sy - 105 * k]]; // saca bíceps (los dos brazos)
     default: return [[sx + s * 50 * k + sw * 0.3, sy + 95 * k], [sx + s * 85 * k + sw, sy + 175 * k]];
   }
 };
@@ -53,6 +54,7 @@ const rightArm = (arm: Arm, sho: P2, k: number, ph: number): [P2, P2] => {
   switch (arm) {
     case "icecream": case "candle": case "flash": return [[sx + 95 * k, sy + 100 * k], [sx + 70 * k, sy + 50 * k]];
     case "phone": return [[sx + 90 * k, sy + 90 * k], [sx + 40 * k, sy + 10 * k]];
+    case "curl": return [[sx + 45 * k, sy + 120 * k], [sx + 80 * k, sy + 35 * k]]; // mancuerna a la altura del hombro
     case "point": return [[sx + 100 * k, sy - 20 * k], [sx + 170 * k, sy - 40 * k]];
     case "wave": return [[sx + 90 * k, sy - 60 * k], [sx + 120 * k + Math.sin(ph * 6.28) * 30 * k, sy - 170 * k]];
     default: return armPose(arm, sho, 1, ph + 0.5, k);
@@ -69,6 +71,9 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
   } else if (arm === "candle") {
     p.poly([[x - 14 * k, y - 70 * k], [x + 14 * k, y - 70 * k], [x + 14 * k, y + 10 * k], [x - 14 * k, y + 10 * k]], "#f4efe2", 6 * k);
     p.poly([[x, y - 120 * k], [x + 14 * k, y - 86 * k], [x, y - 72 * k], [x - 14 * k, y - 86 * k]], "#ffc23a", 4 * k);
+  } else if (arm === "curl") { // mancuerna roja
+    p.poly([[x - 52 * k, y - 7 * k], [x + 52 * k, y - 7 * k], [x + 52 * k, y + 7 * k], [x - 52 * k, y + 7 * k]], "#9aa4b4", 5 * k);
+    for (const sx of [-1, 1]) cel(p, [[x + sx * 40 * k, y - 34 * k], [x + sx * 66 * k, y - 34 * k], [x + sx * 66 * k, y + 34 * k], [x + sx * 40 * k, y + 34 * k]], "#e84a4a", 6 * k, 0.05);
   } else if (arm === "flash") {
     p.poly([[x - 16 * k, y - 50 * k], [x + 16 * k, y - 50 * k], [x + 12 * k, y + 20 * k], [x - 12 * k, y + 20 * k]], "#d84a3a", 6 * k);
     p.ell(x, y - 54 * k, 22 * k, 10 * k, "#fff6b0", 5 * k);
@@ -77,7 +82,12 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
 };
 
 // ---------------- Sticky (the lead) ----------------
-export type StickyOpts = { expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number; run?: boolean; talk?: number };
+export type StickyOpts = {
+  expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number; run?: boolean; talk?: number;
+  /** músculo 0 (normal) .. 10 (enorme): torso en V con pectorales y abdominales, brazos y piernas gruesos, la cabeza igual.
+   *  Con musc > 0 la tarjeta es la ancha XBODY (1000 x 1000) para que quepan los brazos. */
+  musc?: number;
+};
 // ---------------- cel-shading (estilo v2): relleno con sombra de corte duro abajo a la derecha ----------------
 /** color de sombra: más oscuro y un poco lavanda, como la sombra de la referencia */
 export const sombra = (c: string, k = 0.74) => mix(shade(c, k), "#5a4a8a", 0.14);
@@ -172,16 +182,21 @@ const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?:
 /** cuánto sube el cuerpo en esta fase del paso (más alto cuando una pierna pasa por debajo) */
 export const bobOf = (walk: number | undefined, run = false) => (walk === undefined ? 0 : Math.abs(Math.sin(walk * Math.PI * 2)) * (run ? 22 : 9));
 /** piernas vistas de frente: la rodilla se dobla hacia afuera y el pie se levanta al dar el paso; `foot` dibuja el zapato */
-const stepLegs = (p: Pen, hips: [P2, P2], walk: number | undefined, run: boolean, lw: number, foot: (x: number, y: number, side: number) => void, ground = 962) => {
-  ([[0, -1], [1, 1]] as const).forEach(([i, side]) => {
+/** cadera, rodilla y pie de cada pierna (izquierda, derecha) para esta fase del paso */
+const legJoints = (hips: [P2, P2], walk: number | undefined, run: boolean, ground = 962, spread = 0) =>
+  ([[0, -1], [1, 1]] as const).map(([i, side]) => {
     const [hx, hy] = hips[i];
     let lift = 0, sway = 0;
     if (walk !== undefined) { const ph = walk * Math.PI * 2 + (side > 0 ? Math.PI : 0); lift = Math.max(0, Math.sin(ph)); sway = Math.cos(ph); }
-    const fx = hx + side * (run ? 6 : 14) + sway * (run ? 8 : 5) * side, fy = ground - lift * (run ? 120 : 60);
-    const kx = (hx + fx) / 2 + side * (6 + lift * (run ? 44 : 26)), ky = (hy + fy) / 2 - lift * (run ? 36 : 16);
-    p.stroke([[hx, hy], [kx, ky], [fx, fy]], lw);
-    foot(fx, fy, side);
+    const fx = hx + side * ((run ? 6 : 14) + spread) + sway * (run ? 8 : 5) * side, fy = ground - lift * (run ? 120 : 60);
+    const kx = (hx + fx) / 2 + side * (6 + lift * (run ? 44 : 26) + spread * 0.6), ky = (hy + fy) / 2 - lift * (run ? 36 : 16);
+    return { hip: [hx, hy] as P2, knee: [kx, ky] as P2, foot: [fx, fy] as P2, side };
   });
+const stepLegs = (p: Pen, hips: [P2, P2], walk: number | undefined, run: boolean, lw: number, foot: (x: number, y: number, side: number) => void, ground = 962) => {
+  for (const j of legJoints(hips, walk, run, ground)) {
+    p.stroke([j.hip, j.knee, j.foot], lw);
+    foot(j.foot[0], j.foot[1], j.side);
+  }
 };
 /** brazo que se balancea al caminar (codo apenas doblado) o que bombea al correr (codo a 90 grados) */
 const swingArm = (sho: P2, side: number, walk: number, run: boolean, k: number): [P2, P2] => {
@@ -198,6 +213,7 @@ const capsule = (x0: number, x1: number, y0: number, y1: number): P2[] => {
   return pts;
 };
 export const sticky = (p: Pen, o: StickyOpts) => {
+  if ((o.musc ?? 0) > 0) return stickyMusc(p, o);
   const lw = 13, ph = (o.scarf ?? 0) * Math.PI * 2, wk = o.walk;
   const run = !!o.run, bob = bobOf(wk, run);
   // piernas con rodilla y zapatitos (los pies se quedan en el piso; el cuerpo sube y baja)
@@ -213,7 +229,7 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.stroke([[322 + 6 * 13 - 14, 508 + 6 * 24 - 2], [322 + 6 * 13 + 14, 508 + 6 * 24 + 2]], 4, BLUE_D);
   // brazos de palito
   const arm = o.arm ?? "down";
-  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" ? armPose(arm, SH_L, -1, wk ?? 0, 1) : wk !== undefined ? swingArm(SH_L, -1, wk, run, 1) : armPose("down", SH_L, -1, 0, 1);
+  const [le, lh] = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" || arm === "flex" ? armPose(arm, SH_L, -1, wk ?? 0, 1) : wk !== undefined ? swingArm(SH_L, -1, wk, run, 1) : armPose("down", SH_L, -1, 0, 1);
   p.stroke([SH_L, le, lh], lw); p.dot(lh[0], lh[1], 13);
   let re: P2, rh: P2;
   if (arm === "up") { rh = stickyHand(o); re = [392, 440]; } else if (arm === "down" && wk !== undefined) [re, rh] = swingArm(SH_R, 1, wk, run, 1); else [re, rh] = rightArm(arm, SH_R, 1, wk ?? 0);
@@ -227,8 +243,113 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.poly([[276, 500], [304, 504], [296, 600], [264, 592]], BLUE, 8);
   p.stroke([[268, 582], [298, 588]], 4, BLUE_D);
   p.ell(286, 506, 22, 18, BLUE, 8);
-  if (arm !== "up" && arm !== "down") held(p, arm, rh, 1); else p.dot(rh[0], rh[1], 13);
+  if (arm !== "up" && arm !== "down" && arm !== "flex") held(p, arm, rh, 1); else p.dot(rh[0], rh[1], 13);
   p.g.restore();
+};
+
+/// ---------------- Sticky musculoso (musc 1..10) ----------------
+/** miembro grueso de A a B: radio rA -> rB, con un músculo (`bul`) que abulta más del lado `bside` (+1 / -1 de la normal) */
+const limbPts = (A: P2, B: P2, rA: number, rB: number, bul: number, bside: number, peak = 0.45): P2[] => {
+  const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux, N = 14, out: P2[] = [];
+  const w = (t: number, sd: number) => rA + (rB - rA) * t + bul * Math.pow(Math.max(0, Math.sin(Math.PI * Math.min(1, (t * 0.5) / peak))), 1.5) * (sd === bside ? 1 : 0.35);
+  for (let i = 0; i <= N; i++) { const t = i / N, ww = w(t, 1); out.push([A[0] + dx * t + nx * ww, A[1] + dy * t + ny * ww]); }
+  for (let a = 1; a < 8; a++) { const f = (a * Math.PI) / 8; out.push([B[0] + rB * (nx * Math.cos(f) + ux * Math.sin(f)), B[1] + rB * (ny * Math.cos(f) + uy * Math.sin(f))]); }
+  for (let i = N; i >= 0; i--) { const t = i / N, ww = w(t, -1); out.push([A[0] + dx * t - nx * ww, A[1] + dy * t - ny * ww]); }
+  for (let a = 1; a < 8; a++) { const f = (a * Math.PI) / 8; out.push([A[0] - rA * (nx * Math.cos(f) + ux * Math.sin(f)), A[1] - rA * (ny * Math.cos(f) + uy * Math.sin(f))]); }
+  return out;
+};
+/** lado de la normal de A->B que mira hacia el punto P (+1 / -1) */
+const sideOf = (A: P2, B: P2, P: P2) => Math.sign(-(B[1] - A[1]) * (P[0] - A[0]) + (B[0] - A[0]) * (P[1] - A[1])) || 1;
+const whiteCel = (p: Pen, pts: P2[], ol = 10) => celPaint(p, pts, (lit) => { p.g.fillStyle = lit ? WHITE : SHADE; p.g.fillRect(-2000, -2000, 6000, 6000); }, ol, 0.16);
+/** brazo grueso hombro -> codo -> mano: bíceps del lado de adentro del codo (o hacia afuera si va casi recto) */
+const muscArm = (p: Pen, S: P2, E: P2, H: P2, m: number, cx: number) => {
+  const ang = Math.abs(Math.atan2((E[0] - S[0]) * (H[1] - E[1]) - (E[1] - S[1]) * (H[0] - E[0]), (E[0] - S[0]) * (H[0] - E[0]) + (E[1] - S[1]) * (H[1] - E[1])));
+  const outS = sideOf(S, E, [S[0] + (S[0] - cx) * 4, S[1]]), bs = ang > 0.45 ? sideOf(S, E, H) : outS;
+  const rS = 7 + 31 * m, rE = 6 + 17 * m, rW = 5 + 11 * m;
+  whiteCel(p, limbPts(E, H, rE + 2 * m, rW, 14 * m, -sideOf(E, H, [E[0] + (E[0] - cx) * 4, E[1]]), 0.3));
+  whiteCel(p, limbPts(S, E, rS, rE, (ang > 0.45 ? 38 : 22) * m, bs, ang > 0.45 ? 0.58 : 0.5));
+  if (m > 0.45) { // línea del bíceps
+    const L = Math.hypot(E[0] - S[0], E[1] - S[1]) || 1, ux = (E[0] - S[0]) / L, uy = (E[1] - S[1]) / L, nx = -uy * bs, ny = ux * bs;
+    const mx = (S[0] + E[0]) / 2, my = (S[1] + E[1]) / 2, r = rS * 0.5 + 10 * m;
+    p.stroke([[mx - ux * r + nx * r * 0.2, my - uy * r + ny * r * 0.2], [mx + nx * r * 0.6, my + ny * r * 0.6], [mx + ux * r + nx * r * 0.2, my + uy * r + ny * r * 0.2]], 4 + 2 * m);
+  }
+};
+const stickyMusc = (p: Pen, o: StickyOpts) => {
+  const m = Math.min(1, Math.max(0, (o.musc ?? 0) / 10)), g = p.g, ph = (o.scarf ?? 0) * Math.PI * 2, wk = o.walk, run = !!o.run, bob = bobOf(wk, run);
+  const cx = 300, lift = 50 * m, yT = 492 - lift, yB = 776, yW = 700 - 6 * m;
+  const nw = 8 + 34 * m, sw = 70 + 150 * m, ww = 84 + 18 * m, capH = 48 + 30 * m, yS = yT + capH, hk = 26 + 46 * m;
+  // piernas gruesas (blancas con contorno) y zapatos más grandes; los pies siguen en el piso
+  const legs = legJoints([[cx - hk, 750 - bob], [cx + hk, 750 - bob]], wk, run, 964, 10 * m);
+  for (const j of legs) {
+    const out = (A: P2, B: P2) => sideOf(A, B, [A[0] + j.side * 50, A[1]]);
+    whiteCel(p, limbPts(j.knee, j.foot, 6 + 21 * m, 5 + 9 * m, 16 * m, out(j.knee, j.foot), 0.35)); // pantorrilla
+    whiteCel(p, limbPts(j.hip, j.knee, 7 + 40 * m, 6 + 21 * m, 16 * m, out(j.hip, j.knee), 0.45)); // muslo
+    p.ell(j.foot[0] + j.side * 10, j.foot[1] + 4, 28 + 10 * m, 13 + 2 * m, INK, 0);
+  }
+  g.save(); g.translate(0, -bob);
+  // cuello ancho (trapecios)
+  whiteCel(p, [[cx - nw * 0.75, yT - 70], [cx + nw * 0.75, yT - 70], [cx + nw * 1.3, yT + 20], [cx - nw * 1.3, yT + 20]], 10);
+  // torso en V: hombros redondos, espalda ancha, cintura angosta
+  const R: P2[] = [];
+  for (let a = 0; a <= 90; a += 9) { const t = (a * Math.PI) / 180; R.push([cx + nw + (sw - nw) * Math.sin(t), yT + capH * (1 - Math.cos(t))]); }
+  for (let i = 1; i <= 10; i++) { const t = i / 10, u = t * t * (3 - 2 * t); R.push([cx + sw + (ww - sw) * u, yS + (yW - yS) * t]); }
+  for (let a = 9; a <= 90; a += 9) { const t = (a * Math.PI) / 180; R.push([cx + ww * Math.cos(t), yW + (yB - yW) * Math.sin(t)]); }
+  const T: P2[] = [...R, ...R.slice().reverse().map(([x, y]) => [2 * cx - x, y] as P2)];
+  const yP = yS + 0.34 * (yW - yS), ln = 4 + 3 * m, rows = m > 0.55 ? 3 : 2, a0 = yP + 20, a1 = yW + 18, rowH = (a1 - a0) / rows, aw = ww * 0.36;
+  celPaint(p, T, (lit) => {
+    g.fillStyle = lit ? WHITE : SHADE; g.fillRect(-2000, -2000, 6000, 6000);
+    if (!lit) return;
+    // sombras de corte duro bajo los pectorales y abajo de cada cuadrito del abdomen
+    g.fillStyle = SHADE; g.globalAlpha = Math.min(1, m * 2.5);
+    for (const sx of [-1, 1]) { p.path([[cx + sx * 4, yP - 6], [cx + sx * sw * 0.62, yP - 8], [cx + sx * sw * 0.78, yP - 36], [cx + sx * sw * 0.66, yP + 14 * m], [cx + sx * sw * 0.18, yP + 18 * m]], true); g.fill(); }
+    if (m > 0.3) for (let r = 0; r < rows; r++) for (const sx of [-1, 1]) { const x0 = cx + sx * 6, x1 = cx + sx * (6 + aw); g.fillRect(Math.min(x0, x1), a0 + r * rowH + rowH * 0.62, Math.abs(x1 - x0), rowH * 0.3); }
+    g.globalAlpha = 1;
+  });
+  // líneas de tinta: pectorales, esternón, abdominales y oblicuos
+  p.clip(T, () => {
+    g.globalAlpha = Math.min(1, m * 3);
+    for (const sx of [-1, 1]) p.stroke([[cx + sx * 2, yP - 28 * m], [cx + sx * 6, yP - 4], [cx + sx * sw * 0.3, yP + 4], [cx + sx * sw * 0.62, yP - 8], [cx + sx * sw * 0.8, yP - 40]], ln + 1);
+    p.stroke([[cx, yT + capH * 0.55], [cx, yP - 6]], ln);
+    if (m > 0.25) {
+      g.globalAlpha = Math.min(1, (m - 0.25) * 4);
+      p.stroke([[cx, yP + 8], [cx, a1]], ln);
+      for (let r = 1; r < rows; r++) for (const sx of [-1, 1]) p.arc(cx + sx * (6 + aw / 2), a0 + r * rowH, aw / 2, 6, 0, 180, ln);
+      for (const sx of [-1, 1]) p.arc(cx + sx * (6 + aw / 2), a0 + 6, aw / 2, 8, 180, 360, ln);
+    }
+    if (m > 0.55) {
+      g.globalAlpha = Math.min(1, (m - 0.55) * 4);
+      for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const y = yP + 34 + k * 30, x = cx + sx * (ww + (sw - ww) * 0.32 - k * 8); p.stroke([[x, y], [x - sx * 26, y + 14]], ln - 1); }
+    }
+    g.globalAlpha = 1;
+  });
+  // cola de la bufanda (detrás de los brazos)
+  const tx = cx + 22 + 34 * m, ty = yT + 16, tail: P2[] = [[tx, ty]];
+  for (let i = 1; i <= 6; i++) tail.push([tx + i * 13 + Math.sin(ph + i * 0.8) * 9 * (i / 6), ty + i * 24]);
+  p.poly([...tail.map(([x, y]) => [x - 17, y] as P2), ...tail.slice().reverse().map(([x, y]) => [x + 17, y + 4] as P2)], BLUE, 8);
+  p.stroke([[tx + 6 * 13 - 14, ty + 6 * 24 - 2], [tx + 6 * 13 + 14, ty + 6 * 24 + 2]], 4, BLUE_D);
+  // brazos gruesos: los que cuelgan se abren para no meterse en la espalda
+  const arm = o.arm ?? "down", ak = 1 + 0.12 * m;
+  const SL: P2 = [cx - (66 + (sw - 70) * 0.92), yT + 80 - 30 * m], SR: P2 = [cx + (66 + (sw - 70) * 0.92), yT + 80 - 30 * m];
+  const open = (side: number, eh: [P2, P2], hang: boolean): [P2, P2] => (hang ? [[eh[0][0] + side * 30 * m, eh[0][1]], [eh[1][0] + side * 40 * m, eh[1][1]]] : eh);
+  const lPose = arm === "fly" || arm === "cheer" || arm === "cover" || arm === "hug" || arm === "flex" || arm === "up";
+  const [le, lh] = open(-1, lPose ? armPose(arm, SL, -1, wk ?? 0, ak) : wk !== undefined ? swingArm(SL, -1, wk, run, ak) : armPose("down", SL, -1, 0, ak), !lPose && !run);
+  const [re, rh] = open(1, arm === "down" && wk !== undefined ? swingArm(SR, 1, wk, run, ak) : arm === "up" ? armPose("up", SR, 1, 0, ak) : rightArm(arm, SR, ak, wk ?? 0), arm === "down" && !run);
+  muscArm(p, SL, le, lh, m, cx); p.dot(lh[0], lh[1], 13 + 12 * m);
+  muscArm(p, SR, re, rh, m, cx);
+  // cabeza del mismo tamaño (se ve chiquita sobre tanto músculo)
+  headV2(p, cx, 292 - lift, 150, 162);
+  browFace(p, 292, 300 - lift, o.expr, o.look, o.blink ?? 0, o.talk ?? 0);
+  // bufanda estirada alrededor del cuello ancho
+  const by = yT - 2, brx = 78 + 46 * m;
+  celPaint(p, ellPtsV(cx, by, brx, 30 + 4 * m), (lit) => { g.fillStyle = lit ? BLUE : BLUE_D; g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
+  p.arc(cx, by - 12, brx - 12, 20, 20, 160, 5, BLUE_D);
+  if (m > 0.3) for (const sx of [-1, 1]) p.stroke([[cx + sx * brx * 0.45, by - 10], [cx + sx * brx * 0.62, by + 12]], 4, BLUE_D); // tensión
+  const kx = 286 - 4 * m, ky = by + 16;
+  p.poly([[kx - 10, ky - 6], [kx + 18, ky - 2], [kx + 10, ky + 94], [kx - 22, ky + 86]], BLUE, 8);
+  p.stroke([[kx - 18, ky + 76], [kx + 12, ky + 82]], 4, BLUE_D);
+  p.ell(kx, ky, 22 + 3 * m, 18 + 2 * m, BLUE, 8);
+  if (arm !== "up" && arm !== "down" && arm !== "flex") held(p, arm, rh, 1); else p.dot(rh[0], rh[1], 13 + 12 * m);
+  g.restore();
 };
 
 // ---------------- background people (v2: cuerpo con ropa y sombra de corte duro) ----------------
@@ -311,7 +432,7 @@ export const person = (p: Pen, o: PersonOpts) => {
   if (o.bag) { p.stroke([[262, 492], [380, 700]], 7, o.bag); cel(p, [[360, 690], [436, 690], [436, 764], [360, 764]], o.bag, 7, 0.05); }
   // brazos de palito
   const arm = o.arm ?? "down";
-  const [le, lh] = arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" ? armPose(arm, SHL, -1, wk ?? 0, 0.9) : wk !== undefined ? swingArm(SHL, -1, wk, run, 0.9) : armPose("down", SHL, -1, 0, 0.9);
+  const [le, lh] = arm === "cheer" || arm === "fly" || arm === "up" || arm === "cover" || arm === "hug" || arm === "flex" ? armPose(arm, SHL, -1, wk ?? 0, 0.9) : wk !== undefined ? swingArm(SHL, -1, wk, run, 0.9) : armPose("down", SHL, -1, 0, 0.9);
   p.stroke([SHL, le, lh], lw); p.dot(lh[0], lh[1], 11);
   const [re, rh] = arm === "down" && wk !== undefined ? swingArm(SHR, 1, wk, run, 0.9) : rightArm(arm, SHR, 0.9, wk ?? 0);
   p.stroke([SHR, re, rh], lw);
@@ -329,7 +450,7 @@ export const person = (p: Pen, o: PersonOpts) => {
     else p.poly([[mx, my - 10 * k], [mx + 50 * k, my - 2 * k], [mx + 44 * k, my + 14 * k], [mx, my + 6 * k], [mx - 44 * k, my + 14 * k], [mx - 50 * k, my - 2 * k]], INK, o.stache === "thin" ? 2 : 4);
   }
   hatDraw(p, o, 300, HY - (RY - R), R);
-  if (arm !== "down" && arm !== "up" && arm !== "cheer" && arm !== "fly" && arm !== "wave" && arm !== "point" && arm !== "cover" && arm !== "hug") held(p, arm, rh, 0.9); else p.dot(rh[0], rh[1], 11);
+  if (arm !== "down" && arm !== "up" && arm !== "cheer" && arm !== "fly" && arm !== "wave" && arm !== "point" && arm !== "cover" && arm !== "hug" && arm !== "flex") held(p, arm, rh, 0.9); else p.dot(rh[0], rh[1], 11);
   g.restore();
 };
 

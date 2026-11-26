@@ -3,7 +3,7 @@
 import { bocaAt } from "./timeline";
 import * as THREE from "three";
 import { Pen } from "./toon";
-import { Pool, Actor, Fx, Stage, tier, tierW, blob, BODY, WIDE } from "./troop";
+import { Pool, Actor, Fx, Stage, tier, tierW, tierX, blob, BODY, WIDE, XBODY, XSHIFT } from "./troop";
 import { NOINK } from "./ink";
 import { LIGHTS, LOOK, LightPreset } from "./lights";
 import { TONE, CHAR, twoTone, untone } from "./shade";
@@ -106,9 +106,11 @@ const STAR_FS = `uniform float uFade; varying float vA; void main(){ vec2 d = gl
   gl_FragColor = vec4(vec3(1.0, 0.97, 0.88) * (1.0 - r * r) * vA * uFade * 1.6, 1.0); }`;
 const pxOf = (r: THREE.WebGLRenderer, c: THREE.Camera) => { const rt = r.getRenderTarget(), h = rt ? rt.height : r.domElement.height; return h / (2 * Math.tan(THREE.MathUtils.degToRad((c as THREE.PerspectiveCamera).fov) / 2)); };
 
+/** Sticky musculoso (musc > 0) va en la tarjeta ancha XBODY: el dibujo se corre XSHIFT a la derecha */
+const xcard = (c: Card) => c.kind === "sticky" && (c.o.musc ?? 0) > 0;
 const drawCard = (c: Card) => (p: Pen) => {
   switch (c.kind) {
-    case "sticky": return sticky(p, c.o);
+    case "sticky": if (xcard(c)) p.g.translate(XSHIFT, 0); return sticky(p, c.o);
     case "person": return person(p, c.o);
     case "dog": return dog(p, c.o);
     case "cat": return cat(p, c.o);
@@ -129,7 +131,7 @@ const drawCard = (c: Card) => (p: Pen) => {
 
 export class World {
   root = new THREE.Group();
-  private sets: Record<string, THREE.Group> = Object.fromEntries(["park", "street", "beach", "space", "house", "elevator", "hospital", "store", "classroom", "desert", "reef", "farm"].map((k) => [k, new THREE.Group()]));
+  private sets: Record<string, THREE.Group> = Object.fromEntries(["park", "street", "beach", "space", "house", "elevator", "hospital", "store", "classroom", "desert", "reef", "farm", "gym"].map((k) => [k, new THREE.Group()]));
   private setRefs!: SetRefs;
   private pool = new Pool(); private actors: Actor[] = []; private fxs: Fx[] = [];
   private hemi: THREE.HemisphereLight; private sun: THREE.DirectionalLight; private sunPoint: THREE.PointLight; private amb: THREE.AmbientLight;
@@ -144,8 +146,11 @@ export class World {
   private parkGround!: THREE.Mesh; private grassM!: THREE.MeshLambertMaterial; private snowM!: THREE.MeshLambertMaterial; private greens: THREE.MeshLambertMaterial[] = []; private pathM!: THREE.MeshLambertMaterial; private crossM!: THREE.MeshLambertMaterial;
   private frustum = new THREE.Frustum(); private m4 = new THREE.Matrix4(); private sph = new THREE.Sphere(); private v = new THREE.Vector3();
 
+  /** horizontal (1080 de alto): las tarjetas se ven más chicas en pixeles, así que basta menos resolución */
+  private tierK = 1; private hz = false;
   constructor(private story: Story) {
     const R = this.root;
+    this.hz = story.formato === "horizontal"; this.tierK = this.hz ? 1920 / 1080 : 1;
     for (const g of Object.values(this.sets)) R.add(g);
     this.skyMat = new THREE.ShaderMaterial({
       uniforms: { c0: { value: new THREE.Color() }, c1: { value: new THREE.Color() }, c2: { value: new THREE.Color() }, c3: { value: new THREE.Color() }, c4: { value: new THREE.Color() }, e: { value: new THREE.Vector4() } },
@@ -168,7 +173,7 @@ export class World {
     this.milky = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: milkyTex(), transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
     this.milky.scale.set(2400, 600, 1); this.milky.layers.set(NOINK); this.milky.renderOrder = -2; R.add(this.milky);
     this.hemi = new THREE.HemisphereLight("#cfe6ff", "#6c5c8c", 1.1);
-    this.sun = new THREE.DirectionalLight("#fff0d6", 2.6); this.sun.castShadow = true; this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun = new THREE.DirectionalLight("#fff0d6", 2.6); this.sun.castShadow = true; this.sun.shadow.mapSize.set(this.hz ? 4096 : 2048, this.hz ? 4096 : 2048);
     this.sunPoint = new THREE.PointLight("#fff1d0", 3.2, 0, 0); this.amb = new THREE.AmbientLight("#405080", 0);
     R.add(this.hemi, this.sun, this.sun.target, this.sunPoint, this.amb);
     // sky discs + clouds (follow the camera, in every outdoor set)
@@ -316,7 +321,8 @@ export class World {
     const L = env === "night" ? NIGHT : env === "dusk" ? DUSK : env === "underwater" ? UNDER : DAY;
     this.hemi.color.set(L.sky); this.hemi.groundColor.set(L.ground); this.hemi.intensity = inSpace ? 0 : L.hemiI;
     this.sun.color.set(L.sunCol); this.sun.intensity = inSpace ? 0 : L.sunI;
-    const Rr = THREE.MathUtils.clamp(cam.position.distanceTo(focus) * 1.15 + 9, 14, 60);
+    // horizontal: el cuadro es más ancho, la caja de sombras también (para que no se corten a los lados)
+    const Rr = THREE.MathUtils.clamp(cam.position.distanceTo(focus) * 1.15 + 9, 14, 60) * (this.hz ? 1.6 : 1);
     this.sun.position.copy(focus).addScaledVector(sunDir, 300); this.sun.target.position.copy(focus);
     const sc = this.sun.shadow.camera; sc.left = -Rr; sc.right = Rr; sc.top = Rr; sc.bottom = -Rr; sc.near = 20; sc.far = 700; sc.updateProjectionMatrix();
     this.sun.shadow.bias = L.bias; this.sun.shadow.normalBias = L.normalBias * (Rr / 12);
@@ -375,17 +381,17 @@ export class World {
     this.frustum.setFromProjectionMatrix(this.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
     const rolls: number[] = [], casts: boolean[] = [], breath: number[] = [];
     for (const cd of S.cards) {
-      const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane";
-      if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(cd.x, y + 1.1 * s, cd.z), (wide ? 4.5 : 1.6) * s))) continue;
-      const d = cam.position.distanceTo(this.v.set(cd.x, y + 1 * s, cd.z)) / s;
-      const size = wide ? tierW(d) : tier(d);
+      const s = cd.s ?? 1, y = (cd.y ?? 0) + (S.set === "beach" ? 0.045 * cd.z : 0), wide = cd.kind === "car" || cd.kind === "wave" || cd.kind === "plane", xb = xcard(cd);
+      if (!this.frustum.intersectsSphere(this.sph.set(this.v.set(cd.x, y + 1.1 * s, cd.z), (wide ? 4.5 : xb ? 2.2 : 1.6) * s))) continue;
+      const d = cam.position.distanceTo(this.v.set(cd.x, y + 1 * s, cd.z)) / s, dk = d * this.tierK;
+      const size = wide ? tierW(dk) : xb ? tierX(dk) : tier(dk);
       // Sticky mueve la boca con la voz del narrador (si la historia trae `voz`)
       if (cd.kind === "sticky" && this.story.voz && cd.o.talk === undefined) {
         const tk = bocaAt(this.story.voz, f);
         if (tk) (cd as { o: StickyOpts }).o = { ...cd.o, talk: tk };
       }
       breath.push(wide ? 0 : Math.sin(t * 2.4 + cd.x * 1.7 + cd.z * 2.3));
-      st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}`, x: cd.x, y, z: cd.z, size, scale: s, wide, mirror: !!cd.mirror, draw: drawCard(cd) });
+      st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}`, x: cd.x, y, z: cd.z, size, scale: s, wide, xbody: xb, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);
       const grounded = (cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
       casts.push(grounded && d * s < 60);
@@ -396,7 +402,7 @@ export class World {
     for (const p of st.places) {
       const a = this.actor(ai), [w, h, k] = p.size, s = p.scale ?? 1;
       a.r = this.pool.req(p.key, w, h, k, p.draw);
-      a.mesh.geometry = p.wide ? WIDE : BODY; a.mesh.visible = true; a.mesh.position.set(p.x, p.y, p.z);
+      a.mesh.geometry = p.wide ? WIDE : p.xbody ? XBODY : BODY; a.mesh.visible = true; a.mesh.position.set(p.x, p.y, p.z);
       a.mesh.rotation.set(0, Math.atan2(cam.position.x - p.x, cam.position.z - p.z), rolls[ai]);
       a.mesh.scale.set(p.mirror ? -s : s, s * (1 + 0.012 * breath[ai]), s); // respiración: sube y baja muy poquito
       // silueta de sombra: de cara al sol (de lado se vería como una rayita)

@@ -11,7 +11,7 @@ import { InkPass, noInkFallback } from "./ink";
 import { LensBlur } from "./lensblur";
 import { GradeEffect, GRADES, GRADE_STRENGTH, gradeFor } from "./grade";
 import { smooth } from "./timeline";
-import type { Story } from "./types";
+import { dims, type Story } from "./types";
 
 const makeBloom = () => {
   const b = new BloomEffect({ blendFunction: BlendFunction.ADD, intensity: 0.5, luminanceThreshold: 1.0, luminanceSmoothing: 0.2, mipmapBlur: true, levels: 6, radius: 0.6 });
@@ -53,7 +53,7 @@ const Inner: React.FC<{ id: number; story: Story }> = ({ id, story }) => {
 const dprOverride = () => (getInputProps() as { dpr?: number }).dpr;
 const ShotView: React.FC<{ id: number; alpha: number; story: Story }> = ({ id, alpha, story }) => (
   <AbsoluteFill style={{ opacity: alpha }}>
-    <ThreeCanvas width={1080} height={1920} {...(dprOverride() ? { dpr: dprOverride() } : {})} shadows
+    <ThreeCanvas width={dims(story).width} height={dims(story).height} {...(dprOverride() ? { dpr: dprOverride() } : {})} shadows
       gl={{ antialias: false, stencil: false, powerPreference: "high-performance", toneMappingExposure: 1.0 }} camera={{ fov: 40, near: 0.1, far: 5000 }}>
       <Inner id={id} story={story} />
     </ThreeCanvas>
@@ -63,20 +63,22 @@ const ShotView: React.FC<{ id: number; alpha: number; story: Story }> = ({ id, a
 const FONT = "'Arial Rounded MT Bold', 'Arial Black', Arial, sans-serif";
 const Overlay: React.FC<{ f: number; story: Story; speed: number }> = ({ f, story, speed }) => {
   const live = story.MARKS.filter((m) => f >= m.a && f <= m.b);
+  // horizontal: títulos más arriba y un poco más chicos (la mitad de abajo es de los subtítulos)
+  const { width: W, height: H } = dims(story), hz = W > H, tx = W / 2, ty = hz ? 150 : 300, fs = hz ? 80 : 88, fsub = hz ? 40 : 42;
   return (
     <AbsoluteFill>
-      <svg width={1080} height={1920}>
-        {speed > 0.01 && Array.from({ length: 26 }, (_, i) => {
-          const y = ((i * 197 + 61) % 1900), x = ((i * 389 + f * 90) % 1500) - 300, len = 180 + (i % 5) * 60;
+      <svg width={W} height={H}>
+        {speed > 0.01 && Array.from({ length: hz ? 22 : 26 }, (_, i) => {
+          const y = hz ? ((i * 197 + 61) % (H - 20)) : ((i * 197 + 61) % 1900), x = ((i * 389 + f * 90) % (W + 420)) - 300, len = (180 + (i % 5) * 60) * (hz ? 1.3 : 1);
           return <line key={i} x1={x} y1={y} x2={x + len} y2={y} stroke="#ffffff" strokeOpacity={0.55 * speed} strokeWidth={4 + (i % 3) * 2} strokeLinecap="round" />;
         })}
         {live.map((m) => {
           const pop = smooth((f - m.a) / 6), out = 1 - smooth((f - (m.b - 6)) / 6);
           return (
             <g key={m.label + m.a} opacity={out}>
-              <g transform={`translate(540,300) scale(${0.85 + 0.15 * pop})`} opacity={pop}>
-                <text textAnchor="middle" y={0} fontFamily={FONT} fontSize={88} fill={m.col} stroke="#1a1010" strokeWidth={8} paintOrder="stroke">{m.label}</text>
-                {m.sub && <text textAnchor="middle" y={52} fontFamily={FONT} fontSize={42} fill="#fff" stroke="#1a1010" strokeWidth={7} paintOrder="stroke">{m.sub}</text>}
+              <g transform={`translate(${tx},${ty}) scale(${0.85 + 0.15 * pop})`} opacity={pop}>
+                <text textAnchor="middle" y={0} fontFamily={FONT} fontSize={fs} fill={m.col} stroke="#1a1010" strokeWidth={8} paintOrder="stroke">{m.label}</text>
+                {m.sub && <text textAnchor="middle" y={hz ? 48 : 52} fontFamily={FONT} fontSize={fsub} fill="#fff" stroke="#1a1010" strokeWidth={7} paintOrder="stroke">{m.sub}</text>}
               </g>
             </g>
           );

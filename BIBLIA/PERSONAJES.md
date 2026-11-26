@@ -43,7 +43,26 @@ El dibujo está en `sticky()` de `shorts-sticky/src/engine/stick.ts`. Para ver l
 `node scripts/fotos.mjs FichaSticky out/ficha_ 0 0.5`.
 
 Expresiones (`expr`): `neutral smile lick shock sad scream happy worried shiver frozen relief sleep`.
-Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug cover`.
+Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug cover flex curl`
+(`flex` = saca bíceps con los dos brazos, `curl` = mancuerna roja en la mano derecha; también sirven para el elenco).
+
+### Sticky musculoso (`musc`)
+
+![Sticky musculoso](fotos/musculo_ficha.jpg)
+
+`musc` va de `0` (normal, el dibujo de siempre) a `10` (enorme). Con `elenco.ts`: `sticky(f, expr, arm, pos, look, walk, musc)`,
+o en la tarjeta `o: { ..., musc: 8 }`. Al crecer:
+
+- Torso en **V** (hombros redondos y anchos, cintura angosta), un poco más alto, con **pectorales, esternón, abdominales
+  (2 filas desde musc 3, 3 filas desde musc 6) y oblicuos** en tinta, y sombra de corte duro bajo cada músculo.
+- Brazos y piernas pasan de palito a **miembros blancos con contorno** y bíceps, antebrazo, muslo y pantorrilla.
+  Los brazos que cuelgan se abren para no meterse en la espalda. Puños más grandes y zapatos más grandes.
+- Cuello ancho (trapecios) y **bufanda azul estirada** con rayitas de tensión. **La cabeza no cambia de tamaño** (se ve chiquita a propósito).
+- Caminar, correr, hablar y todas las poses siguen funcionando; los pies siguen en el piso (y = 964 del diseño).
+- Con `musc > 0` la tarjeta es la **ancha `XBODY`** (1000 × 1000 de diseño, el dibujo corrido 200 a la derecha, mismos pies),
+  así caben los brazos abiertos. `world.ts` lo hace solo.
+
+Ficha: `node scripts/fotos.mjs FichaMusculo out/musc_ 0 0.25` (columnas musc 0, 2, 4, 6, 8, 10; filas parado, `flex` y camina/corre/habla/`curl`).
 
 ## Elenco fijo
 

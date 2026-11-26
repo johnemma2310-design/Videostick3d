@@ -6,7 +6,7 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 
 | Cosa | Valor |
 |---|---|
-| Formato | Vertical 1080×1920, 30 fps |
+| Formato | Vertical 1080×1920, 30 fps (shorts). Horizontal 1920×1080 para videos largos (ver abajo) |
 | Render | `npx remotion render ... --codec h264 --crf 18 --gl=angle --concurrency=3 --timeout=240000` |
 | Postproceso | Tinta (contornos) → desenfoque de lente → brillo (bloom) → tono NEUTRAL → gradación de color, con MSAA 4 |
 | Cámara | Tomas con keyframes suaves (`glide`) y fundido de 6 frames entre tomas |
@@ -14,6 +14,23 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 | Colores | Saturados y alegres; la noche es azul, nunca negra |
 | Personajes | Estilo v2: cuerpo con ropa y sombra de corte duro (ver `fotos/elenco_ficha.jpg`) |
 | Sombras | Cada personaje proyecta su silueta en el piso (la tarjeta se gira hacia el sol solo para la sombra) |
+
+## Formato horizontal (videos largos)
+
+- La historia declara `formato: "horizontal"` (`types.ts`) y en `Root.tsx` se registra con `{...dims(HISTORIA)}` → 1920×1080.
+  Sin `formato` todo sigue vertical, igual que antes.
+- Cámara: el `fov` de three es **vertical**; en horizontal usa **40–45** para encuadres equivalentes (el cuadro ya es ancho).
+  Deja a Sticky en un tercio (izquierdo o derecho) y nunca en la franja de abajo (y > 900), que es de los subtítulos.
+- Lo que se ajusta solo: canvas, títulos (`MARKS` arriba a y = 150, letra 80), líneas de velocidad, tinta / desenfoque / brillo
+  (todo se escala con la altura de salida), resolución de las tarjetas (como hay menos pixeles de alto se dibujan más chicas)
+  y la caja de sombras del sol (1.6× más ancha y mapa 4096 para que no se corten a los lados).
+- Los `overlay` SVG propios de cada historia deben ser de 1920×1080.
+- Subtítulos: `subtitulos.py` detecta la orientación con ffprobe → Arial Black 64, borde 6, centrados en y = 960,
+  máximo 5 palabras / 28 caracteres por grupo. El resultado vertical no cambia.
+- Cierre: composición `OutroH` (misma voz `voz/outro`, mismo TOTAL 170) → `out/outro_final_h.mp4`. `RENDERIZAR.bat` lo usa
+  solo en los videos marcados `H=1` (hoy `musculo`). Si un video nuevo no tiene entrada en `audio/mezcla.py`, usa la mezcla genérica.
+- Prueba: composición `PruebaH` (`src/videos/pruebaH.ts`), `node scripts/fotos.mjs PruebaH out/ph_ 30,90,160,215 0.35`.
+  Referencia: `fotos/gym_horizontal.jpg`.
 
 ## Sonido y voz
 

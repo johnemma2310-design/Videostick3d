@@ -9,7 +9,7 @@ import type { SceneState } from "./types";
 
 export const ORIGIN = {
   house: [0, 0, 800], elevator: [60, 0, 800], hospital: [120, 0, 800], store: [180, 0, 800], classroom: [240, 0, 800],
-  desert: [0, 0, -450], reef: [-400, 0, 450], farm: [400, 0, 450],
+  desert: [0, 0, -450], reef: [-400, 0, 450], farm: [400, 0, 450], gym: [300, 0, 800],
 } as const;
 
 const lam = (c: string | THREE.MeshLambertMaterialParameters) => twoTone(new THREE.MeshLambertMaterial(typeof c === "string" ? { color: c } : c));
@@ -39,6 +39,7 @@ export type SetRefs = {
   tap: THREE.Mesh; elevLight: THREE.MeshBasicMaterial; elevBtns: THREE.MeshBasicMaterial; monitor: THREE.MeshBasicMaterial; genLight: THREE.MeshBasicMaterial;
   storeLights: THREE.MeshBasicMaterial[]; globe: THREE.Object3D; weeds: THREE.Mesh[]; spawn: { pts: THREE.Points; u: { uT: { value: number }; uShow: { value: number } } };
   domeSlit: THREE.MeshBasicMaterial;
+  gymNeedle: THREE.Object3D; gymBag: THREE.Object3D; gymBelt: THREE.Texture;
 };
 
 export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
@@ -214,6 +215,99 @@ export const buildSets = (groups: Record<string, THREE.Group>): SetRefs => {
     for (let k = 0; k < 6; k++) { const h = cyl(g, 0.6, 0.6, 1.0, X - 6 + k * 2.2, 0.6, Z - 10 - (k % 2) * 1.5, lam("#f2c94c"), 16); h.rotation.z = Math.PI / 2; }
     for (let k = 0; k < 10; k++) { const t = new THREE.Group(); t.position.set(X - 40 + k * 9, 0, Z - 40 - (k % 3) * 6); const tr = cyl(t, 0.2, 0.3, 2.6, 0, 1.3, 0, lam("#7a5236")); void tr; sph(t, 1.6, 0, 3.6, 0, lam("#4fae4a")); g.add(t); }
   }
+  // ================= gym: piso de goma, espejo, mancuernas, barra con discos, banco, caminadoras, saco y báscula =================
+  {
+    const g = groups.gym, o = ORIGIN.gym, [X, , Z] = o;
+    const rubber = ctex("gymRubber", 512, 512, (gg, r) => {
+      gg.fillStyle = "#3f4a5c"; gg.fillRect(0, 0, 512, 512);
+      const fl = ["#e84a4a", "#2f86d6", "#ffd23f", "#6bd36b", "#f4f1ea"];
+      for (let i = 0; i < 2600; i++) { gg.fillStyle = fl[Math.floor(r() * fl.length)]; gg.globalAlpha = 0.55; gg.fillRect(r() * 512, r() * 512, 2 + r() * 3, 2 + r() * 2); }
+      gg.globalAlpha = 1; gg.strokeStyle = "rgba(20,20,30,0.55)"; gg.lineWidth = 4;
+      for (let i = 0; i <= 512; i += 256) { gg.beginPath(); gg.moveTo(i, 0); gg.lineTo(i, 512); gg.stroke(); gg.beginPath(); gg.moveTo(0, i); gg.lineTo(512, i); gg.stroke(); }
+    });
+    room(g, o, 14, 10, 3.6, lam({ map: rep(rubber, 7, 5) }), "#ffb03a", "#5fd0ff", "#ff6fa3");
+    // franja de color en las paredes
+    box(g, 14, 0.35, 0.05, X, 0.9, Z - 4.88, lam("#e84a4a"), false);
+    box(g, 0.05, 0.35, 10, X - 6.88, 0.9, Z, lam("#2f86d6"), false); box(g, 0.05, 0.35, 10, X + 6.88, 0.9, Z, lam("#9b6bff"), false);
+    // tapetes de colores (zona de pesas libres, donde se para Sticky)
+    const mats = ctex("gymMats", 512, 512, (gg) => {
+      const cs = ["#e84a4a", "#2f86d6", "#ffd23f", "#6bd36b"];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { gg.fillStyle = cs[(i + j * 3) % 4]; gg.fillRect(i * 128, j * 128, 128, 128); }
+      gg.strokeStyle = "rgba(20,20,30,0.5)"; gg.lineWidth = 5; for (let i = 0; i <= 512; i += 128) { gg.beginPath(); gg.moveTo(i, 0); gg.lineTo(i, 512); gg.stroke(); gg.beginPath(); gg.moveTo(0, i); gg.lineTo(512, i); gg.stroke(); }
+    });
+    const mat = new THREE.Mesh(new THREE.PlaneGeometry(6, 4).rotateX(-Math.PI / 2), lam({ map: rep(mats, 1.5, 1) })); mat.position.set(X - 1.0, 0.012, Z - 2.4); mat.receiveShadow = true; g.add(mat);
+    // espejo grande en la pared del fondo (con brillos diagonales) y marco
+    plane(g, 6.6, 2.1, X - 0.6, 1.95, Z - 4.86, new THREE.MeshBasicMaterial({ map: ctex("gymMirror", 1024, 330, (gg) => {
+      const gr = gg.createLinearGradient(0, 0, 0, 330); gr.addColorStop(0, "#d9f3ff"); gr.addColorStop(1, "#9fd2ee"); gg.fillStyle = gr; gg.fillRect(0, 0, 1024, 330);
+      gg.fillStyle = "rgba(255,255,255,0.6)"; for (const x of [140, 210, 600, 650, 690]) { gg.beginPath(); gg.moveTo(x, 330); gg.lineTo(x + 120, 0); gg.lineTo(x + 150 + (x % 3) * 10, 0); gg.lineTo(x + 30 + (x % 3) * 10, 330); gg.fill(); }
+    }) })).layers.set(NOINK);
+    const frame = lam("#c9ccd6");
+    box(g, 6.8, 0.1, 0.08, X - 0.6, 3.02, Z - 4.84, frame, false); box(g, 6.8, 0.1, 0.08, X - 0.6, 0.88, Z - 4.84, frame, false);
+    for (const dx of [-3.4, 3.4]) box(g, 0.1, 2.24, 0.08, X - 0.6 + dx, 1.95, Z - 4.84, frame, false);
+    // carteles
+    plane(g, 2.6, 0.65, X + 4.6, 2.6, Z - 4.86, new THREE.MeshBasicMaterial({ map: label("gymTu", "¡TÚ PUEDES!", "#e84a4a", "#ffffff") })).layers.set(NOINK);
+    plane(g, 2.4, 0.6, X - 6.86, 2.6, Z - 1.6, new THREE.MeshBasicMaterial({ map: label("gymSin", "SIN EXCUSAS", "#ffd23f", "#20202a") }), Math.PI / 2).layers.set(NOINK);
+    plane(g, 2.4, 0.6, X + 6.86, 2.6, Z - 1.0, new THREE.MeshBasicMaterial({ map: label("gymUna", "¡UNA MÁS!", "#2f86d6", "#ffffff") }), -Math.PI / 2).layers.set(NOINK);
+    plane(g, 1.9, 0.5, X + 4.6, 1.75, Z - 4.86, new THREE.MeshBasicMaterial({ map: label("gymAgua", "TOMA AGUA", "#6bd36b", "#ffffff") })).layers.set(NOINK);
+    // rack de mancuernas de colores (pared izquierda), dos niveles
+    const COL = ["#e84a4a", "#ff9a3c", "#ffd23f", "#6bd36b", "#2f86d6", "#9b6bff", "#ff6fa3"], steel = lam("#9aa4b4"), dark = lam("#3a3a44");
+    box(g, 0.7, 0.08, 4.6, X - 6.4, 0.45, Z - 1.4, dark); box(g, 0.7, 0.08, 4.6, X - 6.5, 0.95, Z - 1.4, dark);
+    for (const dz of [-3.6, -1.4, 0.8]) { box(g, 0.08, 1.0, 0.08, X - 6.1, 0.5, Z + dz, dark); box(g, 0.08, 1.0, 0.08, X - 6.75, 0.5, Z + dz, dark); }
+    const hexGeo = new THREE.CylinderGeometry(1, 1, 1, 6);
+    for (let lv = 0; lv < 2; lv++) for (let i = 0; i < 7; i++) {
+      const r = 0.07 + i * 0.012 + lv * 0.02, z = Z - 3.5 + i * 0.62, y = (lv ? 0.99 : 0.49) + r, x = X - (lv ? 6.5 : 6.4), cm = lam(COL[i]);
+      const hnd = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.34, 8), steel); hnd.rotation.x = Math.PI / 2; hnd.position.set(x, y, z); g.add(hnd);
+      for (const s of [-1, 1]) { const hd = new THREE.Mesh(hexGeo, cm); hd.scale.set(r, 0.1, r); hd.rotation.x = Math.PI / 2; hd.position.set(x, y, z + s * 0.2); hd.castShadow = true; g.add(hd); }
+    }
+    // banco con barra y discos de colores
+    const pad = lam("#e84a4a");
+    box(g, 0.5, 0.14, 1.6, X - 2.6, 0.5, Z - 2.6, pad); box(g, 0.12, 0.43, 0.12, X - 2.6, 0.22, Z - 2.0, dark); box(g, 0.12, 0.43, 0.12, X - 2.6, 0.22, Z - 3.2, dark);
+    for (const s of [-1, 1]) { box(g, 0.08, 1.25, 0.08, X - 2.6 + s * 0.55, 0.62, Z - 3.35, dark); box(g, 0.14, 0.06, 0.18, X - 2.6 + s * 0.55, 1.15, Z - 3.27, dark); }
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2, 10), steel); bar.rotation.z = Math.PI / 2; bar.position.set(X - 2.6, 1.22, Z - 3.27); bar.castShadow = true; g.add(bar);
+    const disc = (x: number, y: number, z: number, r: number, c: string, rotZ = true) => { const d = cyl(g, r, r, 0.07, x, y, z, lam(c), 24); if (rotZ) d.rotation.z = Math.PI / 2; else d.rotation.x = Math.PI / 2; return d; };
+    for (const s of [-1, 1]) { disc(X - 2.6 + s * 0.78, 1.22, Z - 3.27, 0.36, "#e84a4a"); disc(X - 2.6 + s * 0.86, 1.22, Z - 3.27, 0.3, "#2f86d6"); disc(X - 2.6 + s * 0.93, 1.22, Z - 3.27, 0.22, "#ffd23f"); }
+    // árbol de discos
+    cyl(g, 0.04, 0.04, 1.3, X - 4.4, 0.65, Z - 4.2, dark, 8); box(g, 0.7, 0.06, 0.5, X - 4.4, 0.03, Z - 4.2, dark);
+    [["#6bd36b", 0.28], ["#ffd23f", 0.34], ["#2f86d6", 0.4]].forEach(([c, r], i) => disc(X - 4.4, 0.5 + i * 0.03, Z - 4.2 + 0.06 + i * 0.07, r as number, c as string, false));
+    // caminadoras (pared derecha, mirando al espejo) con banda que avanza
+    const belt = ctex("gymBelt", 64, 256, (gg) => { gg.fillStyle = "#26262e"; gg.fillRect(0, 0, 64, 256); gg.fillStyle = "#3a3a46"; for (let y = 0; y < 256; y += 32) gg.fillRect(0, y, 64, 10); });
+    belt.wrapS = belt.wrapT = THREE.RepeatWrapping; R.gymBelt = belt;
+    for (const dz of [-3.0, -0.6]) {
+      const tx = X + 5.3, tz = Z + dz;
+      box(g, 0.95, 0.22, 2.0, tx, 0.11, tz, lam("#5a5a66"));
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 1.85).rotateX(-Math.PI / 2), lam({ map: belt })); b.position.set(tx, 0.225, tz + 0.05); b.receiveShadow = true; g.add(b);
+      for (const s of [-1, 1]) { box(g, 0.06, 1.1, 0.06, tx + s * 0.42, 0.75, tz - 0.85, dark); box(g, 0.05, 0.05, 0.6, tx + s * 0.42, 1.25, tz - 0.6, steel); }
+      box(g, 0.9, 0.36, 0.14, tx, 1.38, tz - 0.88, lam("#2f86d6"));
+      const scr = plane(g, 0.5, 0.2, tx, 1.4, tz - 0.8, new THREE.MeshBasicMaterial({ color: "#7dffb0" })); scr.rotation.x = -0.35; scr.layers.set(NOINK);
+    }
+    // saco de boxeo en su soporte
+    box(g, 0.12, 2.9, 0.12, X + 3.9, 1.45, Z - 4.1, dark); box(g, 1.3, 0.1, 0.1, X + 3.3, 2.85, Z - 4.1, dark); box(g, 1.0, 0.06, 0.7, X + 3.9, 0.03, Z - 4.1, dark);
+    const piv = new THREE.Group(); piv.position.set(X + 2.75, 2.8, Z - 4.1); g.add(piv); R.gymBag = piv;
+    const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.5, 6), steel); chain.position.y = -0.25; piv.add(chain);
+    const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 1.2, 20), lam("#e84a4a")); bag.position.y = -1.1; bag.castShadow = true; piv.add(bag);
+    for (const y of [-0.62, -1.58]) { const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.275, 0.275, 0.12, 20), lam("#20202a")); cap.position.y = y; piv.add(cap); }
+    const tape = new THREE.Mesh(new THREE.CylinderGeometry(0.278, 0.278, 0.1, 20), lam("#ffd23f")); tape.position.y = -1.1; piv.add(tape);
+    // báscula grande (adelante a la derecha): plataforma en (X+2.3, Z+0.9), carátula mirando a la cámara
+    box(g, 1.0, 0.12, 0.9, X + 2.3, 0.06, Z + 0.9, lam("#f4f1ea"));
+    const rubberTop = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.75).rotateX(-Math.PI / 2), lam("#5a5a66")); rubberTop.position.set(X + 2.3, 0.125, Z + 0.95); g.add(rubberTop);
+    box(g, 0.16, 1.3, 0.16, X + 2.3, 0.7, Z + 0.4, lam("#e84a4a"));
+    cyl(g, 0.4, 0.4, 0.12, X + 2.3, 1.55, Z + 0.42, lam("#e84a4a"), 32).rotation.x = Math.PI / 2;
+    const face = plane(g, 0.66, 0.66, X + 2.3, 1.55, Z + 0.49, new THREE.MeshBasicMaterial({ map: ctex("gymDial", 256, 256, (gg) => {
+      gg.fillStyle = "#ffffff"; gg.beginPath(); gg.arc(128, 128, 124, 0, 6.3); gg.fill();
+      gg.strokeStyle = "#241726"; gg.lineWidth = 4; gg.fillStyle = "#241726"; gg.font = "bold 26px Arial"; gg.textAlign = "center"; gg.textBaseline = "middle";
+      for (let i = 0; i < 40; i++) { const a = -Math.PI * 0.75 + (i / 40) * Math.PI * 1.5 * (40 / 39), L = i % 5 ? 10 : 20; gg.beginPath(); gg.moveTo(128 + Math.sin(a) * 112, 128 - Math.cos(a) * 112); gg.lineTo(128 + Math.sin(a) * (112 - L), 128 - Math.cos(a) * (112 - L)); gg.stroke(); }
+      for (let i = 0; i <= 4; i++) { const a = -Math.PI * 0.75 + (i / 4) * Math.PI * 1.5; gg.fillText(String(i * 50), 128 + Math.sin(a) * 74, 128 - Math.cos(a) * 74); }
+      gg.fillStyle = "#e84a4a"; gg.font = "bold 22px Arial"; gg.fillText("kg", 128, 178);
+    }), transparent: true }));
+    face.layers.set(NOINK);
+    const needle = new THREE.Group(); needle.position.set(X + 2.3, 1.55, Z + 0.5); g.add(needle); R.gymNeedle = needle;
+    const nd = new THREE.Mesh(new THREE.PlaneGeometry(0.025, 0.26), new THREE.MeshBasicMaterial({ color: "#e84a4a" })); nd.position.y = 0.11; nd.layers.set(NOINK); needle.add(nd);
+    const hub = new THREE.Mesh(new THREE.CircleGeometry(0.03, 16), new THREE.MeshBasicMaterial({ color: "#241726" })); hub.position.z = 0.002; hub.layers.set(NOINK); needle.add(hub);
+    // pesas rusas, botellas y una banca de madera
+    [["#2f86d6", -4.6], ["#ffd23f", -4.1], ["#6bd36b", -3.6]].forEach(([c, dx]) => { const kx = X + (dx as number), kz = Z + 0.6; sph(g, 0.17, kx, 0.17, kz, lam(c as string)); const hd = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 8, 16, Math.PI), dark); hd.position.set(kx, 0.33, kz); g.add(hd); });
+    box(g, 1.8, 0.08, 0.45, X + 0.2, 0.45, Z - 4.4, lam("#b97d4a")); for (const dx of [-0.75, 0.75]) box(g, 0.08, 0.42, 0.4, X + 0.2 + dx, 0.21, Z - 4.4, dark);
+    ["#2f86d6", "#ff6fa3", "#6bd36b"].forEach((c, i) => cyl(g, 0.045, 0.045, 0.24, X - 0.2 + i * 0.25, 0.61, Z - 4.4, lam(c), 10));
+  }
   return R;
 };
 
@@ -232,4 +326,9 @@ export const updateSets = (R: SetRefs, S: SceneState, f: number) => {
   R.weeds.forEach((w, i) => { w.rotation.z = Math.sin(t * 1.3 + i) * 0.18; w.rotation.x = Math.cos(t + i * 0.7) * 0.1; });
   R.spawn.u.uT.value = t; R.spawn.u.uShow.value = S.spawn ?? 0;
   R.domeSlit.color.set(night ? "#ffd27a" : "#20202a");
+  // gym: aguja de la báscula (con un temblorcito), saco que se balancea y banda de la caminadora
+  const b = Math.min(1, Math.max(0, S.bascula ?? 0));
+  R.gymNeedle.rotation.z = -(-0.75 * Math.PI + b * 1.5 * Math.PI) + (b > 0 ? Math.sin(t * 9) * 0.02 : 0);
+  R.gymBag.rotation.z = Math.sin(t * 3.2) * 0.22 * (S.saco ?? 0); R.gymBag.rotation.x = Math.cos(t * 2.6) * 0.08 * (S.saco ?? 0);
+  R.gymBelt.offset.y = (t * (S.cinta ?? 0)) / 1.85;
 };

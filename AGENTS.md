@@ -39,5 +39,5 @@ Recomendado: deja la sesión principal en **Sonnet** como orquestador y que el `
 
 ## Para gastar poco
 - Revisa con **fotos sueltas a escala baja** (`node scripts/fotos.mjs <Comp> rev <f1,f2,...> 0.35`) y hojas de contacto, no con renders completos.
-- Las fichas `FichaSticky`, `FichaElenco`, `FichaAnimales` y `FichaMovimiento` sirven para revisar dibujos sin el mundo 3D.
+- Las fichas `FichaSticky`, `FichaElenco`, `FichaAnimales`, `FichaMovimiento` y `FichaMusculo` sirven para revisar dibujos sin el mundo 3D.
 - Lee solo los archivos que vas a cambiar. El motor es grande.
