@@ -20,7 +20,8 @@ const TOTAL = 1483, X = STREET_X, BX = BEACH_X;
 const FA = ORIGIN.farm, CL = ORIGIN.classroom, HO = ORIGIN.house, GY = ORIGIN.gym, EL = ORIGIN.elevator, ST = ORIGIN.store, HS = ORIGIN.hospital;
 const FALL = 1261; // ¡PUM! la gravedad vuelve
 /** invitado especial del cameo (cambiar por el ganador: scripts/cameo.py baja su foto a public/cameo/ganador.jpg) */
-const INVITADO_ESPECIAL = { foto: "cameo/ejemplo.jpg", nombre: "TU NOMBRE AQUÍ" };
+import CAMEO_ACTUAL from "./cameo_actual.json";
+const INVITADO_ESPECIAL = { foto: CAMEO_ACTUAL.foto, nombre: CAMEO_ACTUAL.nombre };
 const at = (o: readonly number[], x: number, y: number, z: number): V3 => [o[0] + x, o[1] + y, o[2] + z];
 const K = (f: number, pos: V3, look: V3, fov: number, glide = false): Key => ({ f, pos, look, fov, glide });
 

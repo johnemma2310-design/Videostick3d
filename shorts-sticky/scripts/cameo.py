@@ -71,7 +71,7 @@ def main():
     coms = [c for c in coms if c.get("authorChannelId", {}).get("value") != propio]
     if not coms:
         print("Todavía no hay comentarios de otras personas.")
-        return
+        sys.exit(3)
     coms.sort(key=lambda c: c["publishedAt"], reverse=True)
 
     subs, tok = set(), None
@@ -108,6 +108,11 @@ def main():
         print(f"  En la historia: cameo: {{ foto: \"cameo/ganador.jpg\", nombre: \"{gan['authorDisplayName']}\" }}")
     else:
         print(f"\nGanador: {gan['authorDisplayName']} (sin foto de perfil: la tarjeta mostrará un \"?\")")
+    # el short lee este archivo: src/videos/cameo_actual.json
+    actual = RAIZ / "shorts-sticky" / "src" / "videos" / "cameo_actual.json"
+    actual.write_text(json.dumps({"foto": "cameo/ganador.jpg" if url else "cameo/sin_foto.jpg",
+                                  "nombre": gan["authorDisplayName"]}, ensure_ascii=False), encoding="utf-8")
+    print(f"Cameo actualizado en {actual}")
 
 
 if __name__ == "__main__":
