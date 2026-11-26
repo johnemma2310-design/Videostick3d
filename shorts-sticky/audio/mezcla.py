@@ -8,7 +8,7 @@ import numpy as np
 
 SR = 48000
 name, voz_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "outro": 170}
+KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "gravedad": 1483, "outro": 170}
 def frames_of(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path], capture_output=True, text=True, check=True).stdout
     return int(round(float(out.strip()) * 30))
@@ -117,6 +117,34 @@ elif name == "luna":
     put(sfx, crowd_gasp(1.2), F(1300), -18)
     happy(F(1410), L, -21)
     put(sfx, boom(1.2, 90, 50, 0.2), F(1529), -15); put(sfx, chime(1568, 1.6), F(1614), -18)
+elif name == "gravedad":
+    # short para niños: música animada todo el rato + un efecto en cada corte (whoosh / pop / boing / golpe)
+    CUTS = [55, 115, 168, 222, 290, 362, 436, 488, 536, 584, 632, 695, 745, 790, 840, 898, 960, 1020, 1075, 1122, 1178, 1240, 1290, 1350, 1415]
+    def pop(): return tone(700, 0.09, 0.001, 0.03)
+    def boing(): return sweep(220, 700, 0.28) * 0.7
+    happy(0, F(1240), -21, 124)
+    for k, f in enumerate(CUTS):
+        if f in (1240, 1290): continue
+        kind = k % 4
+        if kind == 0: put(sfx, whoosh(0.5, 0.25, 6), F(f) - 0.2, -17, 0.4 * (-1) ** k)
+        elif kind == 1: put(sfx, pop(), F(f), -16, 0.3 * (-1) ** k)
+        elif kind == 2: put(sfx, boing(), F(f), -19, 0.3 * (-1) ** k)
+        else: put(sfx, boom(0.5, 110, 55, 0.3), F(f), -17)
+    put(sfx, sweep(900, 200, 0.5), F(30), -16); put(sfx, pop(), F(8), -14)            # salto
+    put(sfx, crowd_gasp(1.2), F(166), -16)                                             # todo flota
+    put(sfx, meow(), F(300), -16, -0.4); put(sfx, bark(), F(225), -17, 0.4)
+    for f in (392, 416): put(sfx, boing(), F(f), -18, 0.3)                              # gallinas / vaca
+    put(sfx, horn(), F(480), -24, 0.5); put(sfx, noise_bed(F(60), 40, 8), F(584), -24)  # claxon, burbujas
+    for k in range(5): put(sfx, pop(), F(590) + k * 0.2, -22, (k % 3 - 1) * 0.6)
+    put(sfx, boom(0.6, 120, 60, 0.3), F(695), -15); put(sfx, chime(1568, 0.8), F(750), -18)  # pesas, ¡fuerza!
+    for f in (1200, 1218, 1232): put(sfx, tone(880, 0.12, 0.001, 0.06), F(f), -13)     # 3, 2, 1
+    put(sfx, tone(1320, 0.3, 0.001, 0.12), F(1252), -13)
+    put(sfx, boom(2.4, 60, 24, 0.7), F(FALL := 1261), -5); put(sfx, whoosh(0.8, 0.3, 4), F(1261), -12); put(sfx, crowd_gasp(1.2), F(1262), -14)
+    for k, f in enumerate((1281, 1284, 1288, 1292, 1296, 1300)): put(sfx, boom(0.5, 100 - 8 * k, 40, 0.5), F(f), -11 - k, (k % 3 - 1) * 0.5)  # todo aterriza
+    put(sfx, boing(), F(1300), -17); put(sfx, whoosh(0.5, 0.25, 6), F(1350) - 0.2, -17)
+    put(sfx, sweep(900, 200, 0.7), F(1360), -17); put(sfx, boom(1.0, 90, 40, 0.5), F(1384), -7); put(sfx, bark(), F(1392), -16, 0.4)
+    happy(F(1290), L, -22, 124)
+    put(sfx, chime(1568, 1.4), F(1448), -16)
 elif name == "outro":
     happy(0, L, -19)
     put(sfx, tone(880, 0.12, 0.001, 0.05), F(36), -14)            # button pops in

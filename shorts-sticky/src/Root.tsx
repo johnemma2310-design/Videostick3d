@@ -8,6 +8,7 @@ import { OUTRO } from "./videos/outro";
 import { OUTRO_H } from "./videos/outroH";
 import { PRUEBAH } from "./videos/pruebaH";
 import { MUSCULO } from "./videos/musculo";
+import { GRAVEDAD } from "./videos/gravedad";
 import { dims } from "./engine/types";
 import { FichaSticky, FichaElenco, FichaAnimales, FichaMovimiento, FichaMusculo } from "./videos/ficha";
 const Apagon = makeShort(APAGON);
@@ -17,11 +18,13 @@ const Outro = makeShort(OUTRO);
 const OutroH = makeShort(OUTRO_H);
 const PruebaH = makeShort(PRUEBAH);
 const Musculo = makeShort(MUSCULO);
+const Gravedad = makeShort(GRAVEDAD);
 export const Root: React.FC = () => (
   <>
     <Composition id="Apagon" component={Apagon} durationInFrames={APAGON.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Luna" component={Luna} durationInFrames={LUNA.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Rotacion" component={Rotacion} durationInFrames={ROTACION.TOTAL} fps={30} width={1080} height={1920} />
+    <Composition id="Gravedad" component={Gravedad} durationInFrames={GRAVEDAD.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Outro" component={Outro} durationInFrames={OUTRO.TOTAL} fps={30} width={1080} height={1920} />
     {/* horizontales 1920x1080 (videos largos): el tamaño sale del `formato` de la historia */}
     <Composition id="OutroH" component={OutroH} durationInFrames={OUTRO_H.TOTAL} fps={30} {...dims(OUTRO_H)} />

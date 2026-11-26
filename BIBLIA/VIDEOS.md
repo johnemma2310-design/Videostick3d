@@ -7,6 +7,7 @@
 | Y si la Luna desapareciera esta noche | `shorts-sticky` / `Luna` | 60.6 s con cierre | parque, espacio, granja, arrecife, playa, desierto, aula, casa | Listo |
 | Y si la Tierra dejara de girar 1 segundo | `shorts-sticky` / `Rotacion` | 58.4 s con cierre | parque, espacio, granja, calle, playa, polo, aula | Listo |
 | Y si ganaras 1 kg de musculo cada hora | `shorts-sticky` / `Musculo` (horizontal 1920×1080) | 10:06 con cierre | casa, gimnasio, calle, ascensor, hospital, tienda, granja, parque, desierto, playa, arrecife, espacio, aula | Listo (26 nov 2026, -14.2 LUFS) |
+| Y si la gravedad se apagara 5 segundos | `shorts-sticky` / `Gravedad` (short para niños, 26 tomas) | 55.1 s con cierre | parque, casa, granja, calle, playa, gimnasio, aula, espacio | Listo (26 nov 2026, -14.4 LUFS). Primer short del formato para niños |
 | Alejandro Magno (Gaugamela) | `alejandro-victoria` | 9.8 s | campo de batalla | Prueba de estilo, sin voz |
 | Cierre "suscríbete" | `shorts-sticky` / `Outro` | 5.7 s | parque | Se pega al final de cada video |
 
