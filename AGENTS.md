@@ -43,3 +43,14 @@ Recomendado: deja la sesión principal en **Sonnet** como orquestador y que el `
 - Revisa con **fotos sueltas a escala baja** (`node scripts/fotos.mjs <Comp> rev <f1,f2,...> 0.35`) y hojas de contacto, no con renders completos.
 - Las fichas `FichaSticky`, `FichaElenco`, `FichaAnimales`, `FichaMovimiento` y `FichaMusculo` sirven para revisar dibujos sin el mundo 3D.
 - Lee solo los archivos que vas a cambiar. El motor es grande.
+
+## Música y efectos de sonido (biblioteca compartida)
+
+Los 3 proyectos de videos de este PC (stick3DD, STICK 3D y animacion Stick) comparten la misma biblioteca de audio.
+- **En este proyecto está en** `audio/musica/ y audio/sfx/ (catálogo: audio/CATALOGO.md). Para usarlo en un short de Remotion, copia el archivo a su public/`. La lista con el ambiente, el origen y la licencia de cada archivo está en el `CATALOGO` de esa carpeta.
+- **Copia maestra:** `C:\Users\cit\Audio-Compartido\` (ahí está también el catálogo original).
+- **Antes de buscar o generar un sonido, mira el catálogo.** Si ya hay uno que sirve, úsalo.
+- **Si agregas uno nuevo:** guárdalo en la carpeta de audio de este proyecto (minúsculas, sin espacios ni acentos) y ejecuta
+  `powershell -ExecutionPolicy Bypass -File C:\Users\cit\Audio-Compartido\sincronizar_audio.ps1`. El script lo copia a los otros proyectos sin sobrescribir nada.
+  Luego describe en `C:\Users\cit\Audio-Compartido\CATALOGO.md` para qué sirve, de dónde salió y su licencia, vuelve a ejecutar el script y haz commit y push de la carpeta de audio.
+- **Dónde buscar audio nuevo:** genéralo con código (`tools/make_sfx.py` y `tools/make_music.py` de stick3DD), o usa YouTube Audio Library, Pixabay o Freesound (solo CC0). Incompetech es CC-BY y hay que dar crédito. **Nunca** uses música comercial ni sonidos "trending" de TikTok.

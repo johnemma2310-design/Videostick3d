@@ -5,6 +5,8 @@ out/
 *.wav
 *.mov
 public/*.wav
+# ...excepto la biblioteca de audio compartida (ver audio/CATALOGO.md)
+!/audio/**/*.wav
 
 # Skill original de LuisPa (se baja de su propio repo; su historial queda en la rama luispa-original)
 SKILL.md
