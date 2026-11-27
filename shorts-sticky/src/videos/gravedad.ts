@@ -368,21 +368,24 @@ const dofAt = (_id: number, _f: number) => ({ cInf: 3 });
 /** portada: Sticky enorme de cabeza con cara de sorpresa, Toby, la vaca y un coche flotando, y el texto gigante */
 const PORTADA: Portada = {
   texto: ["¡SIN", "GRAVEDAD!"], textoH: ["¡SIN GRAVEDAD!"], col: "#ffd23f",
-  expr: "sorpresa", arm: "fly", set: "park", env: "day", flota: 1, blur: 14,
-  sticky: { head: [0, 1.2, 0], roll: Math.PI - 0.5 },
-  cam: { pos: [0, 1.3, 2.15], look: [0, 1.46, 0], fov: 52 },
-  camH: { pos: [0.1, 1.3, 1.95], look: [0.1, 1.42, 0], fov: 44 },
+  // Sticky casi derecho (20°), brazos arriba y cara de susto (gota de sudor), flotando alto: su sombra queda lejos abajo
+  expr: "susto", arm: "cheer", set: "park", env: "day", flota: 1, blur: 14,
+  sticky: { head: [0, 2.9, 0], roll: 0.35 },
+  cam: { pos: [0, 3.3, 2.3], look: [0, 2.72, 0], fov: 54 },
+  stickyH: { head: [0, 3.5, 0], roll: 0.35 },
+  camH: { pos: [0, 4.0, 2.25], look: [0, 3.32, 0], fov: 46 },
   cosas: [
-    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -0.62, y: 0.1, z: -1.1, s: 0.5, roll: 0.45 },
-    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: -1.0, y: 1.25, z: -2.6, s: 0.4, roll: 0.45 },
-    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.3, y: 0.62, z: 0.35, s: ESCALA.perro * 0.75, roll: -0.5, mirror: true },
+    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -0.5, y: 1.65, z: -0.6, s: 0.5, roll: 0.5 },
+    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: 0.8, y: 2.55, z: -2.4, s: 0.4, roll: -0.45, mirror: true },
+    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.4, y: 1.42, z: 0.3, s: ESCALA.perro * 0.75, roll: -0.55, mirror: true },
   ],
   cosasH: [
-    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -1.45, y: 1.0, z: -1.2, s: 0.55, roll: 0.45 },
-    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: 1.75, y: 1.0, z: -1.4, s: 0.48, roll: -0.4, mirror: true },
-    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.92, y: 0.68, z: 0.3, s: ESCALA.perro * 0.75, roll: -0.6, mirror: true },
+    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -1.5, y: 2.55, z: -0.9, s: 0.55, roll: 0.45 },
+    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: 1.75, y: 3.05, z: -1.6, s: 0.48, roll: -0.4, mirror: true },
+    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.95, y: 2.5, z: 0.4, s: ESCALA.perro * 0.75, roll: -0.6, mirror: true },
   ],
 };
+
 
 export const GRAVEDAD: Story = {
   voz: VOZ,

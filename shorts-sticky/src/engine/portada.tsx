@@ -20,6 +20,8 @@ export type Portada = {
   set: SetName; env?: Env; flota?: number;
   /** Sticky: centro de la CABEZA (m), giro (rad; Math.PI = de cabeza) y escala extra */
   sticky?: { head?: V3; roll?: number; s?: number };
+  /** Sticky en horizontal (si falta se usa `sticky`) */
+  stickyH?: { head?: V3; roll?: number; s?: number };
   /** otras cosas flotando (vaca, coche, Toby...) en vertical y en horizontal (si falta `cosasH` se usan `cosas`) */
   cosas?: Card[]; cosasH?: Card[];
   /** cámaras (por defecto, de frente a 3 m de la cabeza de Sticky) */
@@ -53,7 +55,7 @@ const Titulo: React.FC<{ lineas: string[]; col: string; W: number; H: number }> 
 /** convierte la portada de una historia en una Story de 1 cuadro (sirve para makeShort) */
 export const portadaStory = (P: Portada, formato: Formato): Story => {
   const hz = formato === "horizontal", W = hz ? 1920 : 1080, H = hz ? 1080 : 1920;
-  const st = P.sticky ?? {}, head = st.head ?? [0, 1.4, 0], roll = st.roll ?? Math.PI, s = ESCALA.sticky * (st.s ?? 1);
+  const st = (hz ? P.stickyH : undefined) ?? P.sticky ?? {}, head = st.head ?? [0, 1.4, 0], roll = st.roll ?? Math.PI, s = ESCALA.sticky * (st.s ?? 1);
   // la tarjeta gira sobre los pies: los ponemos donde haga falta para que la cabeza quede en `head`
   const hh = 1.106 * (s / ESCALA.sticky);
   const sti: Card = {
