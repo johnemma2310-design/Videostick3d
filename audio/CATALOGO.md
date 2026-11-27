@@ -36,6 +36,28 @@ La **copia maestra** está en `C:\Users\cit\Audio-Compartido\`. Cada proyecto ti
 | tension.wav | tensión, peligro, cuenta atrás | `tools/make_music.py` (stick3DD) | propia, libre |
 | triste.wav | triste, momentos emotivos | `tools/make_music.py` (stick3DD) | propia, libre |
 
+### Música de fondo para contar historias ("storytime"), de Pixabay
+Descargadas el 27 nov 2026 de Pixabay. Es el tipo de música que se pone debajo de la voz en los videos de historias de TikTok, Reels o Shorts
+para que la gente siga escuchando. **Ninguna está registrada en Content ID** (se comprobó en su página), así que no deberían dar reclamos en YouTube.
+Licencia de Pixabay: gratis, también para videos monetizados, **sin obligación de dar crédito**. No se pueden revender ni subir sueltas como música.
+**Cómo usarlas:** volumen bajo (entre 0.08 y 0.15) para que la voz se entienda. Cambia de canción cuando la historia cambia de tono.
+
+| Archivo | Para qué historia | Duración | Origen | Licencia |
+|---|---|---|---|---|
+| storytime_podcast.mp3 | narración neutra y con ritmo, curiosidades, "¿sabías que…?" | 2:14 | Pixabay · GordieDean · [Storytelling Podcast Vibe](https://pixabay.com/music/pulses-storytelling-podcast-vibe-118024/) | Pixabay, sin Content ID |
+| storytime_trap_inspirador.mp3 | historias de superación, con beat y energía | 2:59 | Pixabay · onesevenbeatxs · [Inspirational Storytelling Groovy Trap Beat](https://pixabay.com/music/beats-inspirational-storytelling-groovy-trap-beat-prod-by-onesevenbeatxs-310380/) | Pixabay, sin Content ID |
+| storytime_cinematico.mp3 | historias épicas o importantes, cuerdas de película | 2:30 | Pixabay · mihailandrei · [Cinematic Storytelling Background](https://pixabay.com/music/classical-string-quartet-cinematic-storytelling-background-454239/) | Pixabay, sin Content ID |
+| piano_emotivo.mp3 | historias emotivas, de familia o finales que tocan el corazón (como *Ethereal*) | 2:34 | Pixabay · AtlasAudio · [Emotional Piano](https://pixabay.com/music/solo-piano-emotional-piano-621564/) | Pixabay, sin Content ID |
+| piano_triste_lluvia.mp3 | historias tristes, de pérdidas o arrepentimiento | 3:19 | Pixabay · alex-morgan · [Sad Piano Emotional Rain Story](https://pixabay.com/music/modern-classical-sad-piano-emotional-rain-story-575883/) | Pixabay, sin Content ID |
+| lofi_noche_lluvia.mp3 | storytime tranquilo de noche, anécdotas (como *Inner Peace* o *Paris*) | 2:23 | Pixabay · alex-morgan · [Lofi Study Rainy Night](https://pixabay.com/music/lofi-lofi-study-rainy-night-568166/) | Pixabay, sin Content ID |
+| lofi_vlog.mp3 | anécdotas ligeras, del día a día, con humor suave | 2:25 | Pixabay · alex-morgan · [Lofi Chill Vlog Beats](https://pixabay.com/music/lofi-lofi-chill-vlog-beats-573883/) | Pixabay, sin Content ID |
+| misterio_suspenso.mp3 | misterio, casos raros, "nadie sabe qué pasó…" | 1:36 | Pixabay · Monume · [Mystery](https://pixabay.com/music/mystery-mystery-603971/) | Pixabay, sin Content ID |
+| sax_oscuro.mp3 | historias de crimen, noche o con giro inesperado (sax con eco, como *Echo Sax*) | 3:32 | Pixabay · Icsilviu · [Dark saxophone 3](https://pixabay.com/music/modern-jazz-dark-saxophone-3-581287/) | Pixabay, sin Content ID |
+| sax_noche_lluvia.mp3 | storytime nostálgico o romántico, sax suave | 3:08 | Pixabay · alex-morgan · [Saxophone Jazz Rainy Night](https://pixabay.com/music/modern-jazz-saxophone-jazz-rainy-night-567549/) | Pixabay, sin Content ID |
+
+> Las canciones virales de TikTok (*Time Back*, *Ethereal*, *Echo Sax End*, *Paris*, *Illusionary Daytime*, *Inner Peace*) **no están aquí** porque tienen copyright.
+> Para usarlas, sube el video sin música y añádelas desde **"Añadir sonido"** en la app de TikTok o de YouTube Shorts.
+
 ## Efectos (`sfx/`)
 | Archivo | Para qué | Origen | Licencia |
 |---|---|---|---|
