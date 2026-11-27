@@ -7,7 +7,7 @@ La **copia maestra** está en `C:\Users\cit\Audio-Compartido\`. Cada proyecto ti
 |---|---|---|
 | stick3DD (videos largos 4D) | `Videos4d` | `assets/musica/` y `assets/sfx/` |
 | STICK 3D (shorts 3D) | `Videostick3d` | `audio/musica/` y `audio/sfx/` |
-| animacion Stick (shorts) | (todavía sin repo) | `assets/audio/musica/` y `assets/audio/sfx/` |
+| animacion Stick (shorts) | `animacion-stick` | `assets/audio/musica/` y `assets/audio/sfx/` |
 
 ## Reglas
 1. **Antes de buscar o generar un sonido, mira esta lista.** Si ya hay uno que sirve, úsalo.
