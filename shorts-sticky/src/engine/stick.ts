@@ -95,6 +95,10 @@ export type StickyOpts = {
   /** músculo 0 (normal) .. 10 (enorme): torso en V con pectorales y abdominales, brazos y piernas gruesos, la cabeza igual.
    *  Con musc > 0 la tarjeta es la ancha XBODY (1000 x 1000) para que quepan los brazos. */
   musc?: number;
+  /** gafas de sol negras (Polo Norte, playa) */
+  gafas?: boolean;
+  /** buzo: tanque amarillo en la espalda, visor y snorkel */
+  buzo?: boolean;
 };
 // ---------------- cel-shading (estilo v2): relleno con sombra de corte duro abajo a la derecha ----------------
 /** color de sombra: más oscuro y un poco lavanda, como la sombra de la referencia */
@@ -315,6 +319,7 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.g.save(); p.g.translate(0, -bob);
   // cuello + torso en cápsula blanca con sombra a la derecha
   p.stroke([[300, 450], [300, 520]], lw);
+  if (o.buzo) { cel(p, [[330, 470], [420, 470], [420, 740], [330, 740]], "#ffd23f", 11, 0.12); p.ell(375, 462, 26, 18, "#9aa4b4", 7); }
   celPaint(p, bean(300, 492, 776, 70, 84), (lit) => { p.g.fillStyle = lit ? WHITE : SHADE; p.g.fillRect(-2000, -2000, 6000, 6000); });
   // cola de la bufanda que ondea (detrás de los brazos)
   const tail: P2[] = [[322, 508]];
@@ -331,6 +336,8 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   // cabeza ovalada blanca con sombra gris (lado derecho y abajo)
   headV2(p, 300, 292, 150, 162);
   browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0, o.talk ?? 0, o.t ?? 0);
+  if (o.gafas) gafasSol(p, 292, 300);
+  if (o.buzo) visor(p, 292, 300);
   // bufanda: vuelta al cuello + nudo + punta corta al frente
   celPaint(p, ellPtsV(300, 490, 78, 30), (lit) => { p.g.fillStyle = lit ? BLUE : BLUE_D; p.g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
   p.arc(300, 478, 66, 20, 20, 160, 5, BLUE_D);
@@ -341,6 +348,23 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.g.restore();
 };
 
+/** gafas de sol: dos micas negras con brillo y puente, sobre los ojos (cx, cy como browFace) */
+const gafasSol = (p: Pen, cx: number, cy: number) => {
+  for (const sx of [-1, 1]) {
+    const ex = cx + sx * 48, ey = cy - 12;
+    p.poly([[ex - 44, ey - 26], [ex + 44, ey - 26], [ex + 38, ey + 16], [ex + 14, ey + 30], [ex - 14, ey + 30], [ex - 38, ey + 16]], "#1d1d2a", 7);
+    p.stroke([[ex - 26, ey - 14], [ex - 8, ey - 14]], 7, "#7a8aa8");
+    p.stroke([[ex + sx * 44, ey - 22], [ex + sx * 120, ey - 34]], 8);
+  }
+  p.stroke([[cx - 6, cy - 34], [cx + 6, cy - 34]], 9);
+};
+/** visor de buceo (marco azul, mica celeste) y snorkel que sube por la derecha */
+const visor = (p: Pen, cx: number, cy: number) => {
+  const g = p.g; g.save(); g.globalAlpha = 0.45; p.poly([[cx - 104, cy - 52], [cx + 104, cy - 52], [cx + 96, cy + 22], [cx + 20, cy + 30], [cx - 20, cy + 30], [cx - 96, cy + 22]], "#9fe4ff", 0); g.restore();
+  p.poly([[cx - 104, cy - 52], [cx + 104, cy - 52], [cx + 96, cy + 22], [cx + 20, cy + 30], [cx - 20, cy + 30], [cx - 96, cy + 22]], null, 12);
+  p.stroke([[cx - 78, cy - 40], [cx - 50, cy - 40]], 7, WHITE);
+  p.line([[cx + 120, cy + 40], [cx + 150, cy - 20], [cx + 150, cy - 170]], "#ff6a3a", 18);
+};
 /// ---------------- Sticky musculoso (musc 1..10) ----------------
 /** miembro grueso de A a B: radio rA -> rB, con un músculo (`bul`) que abulta más del lado `bside` (+1 / -1 de la normal) */
 const limbPts = (A: P2, B: P2, rA: number, rB: number, bul: number, bside: number, peak = 0.45): P2[] => {
@@ -551,7 +575,9 @@ export const person = (p: Pen, o: PersonOpts) => {
 };
 
 // ---------------- animals v2 (side view, facing screen-right): cuerpo relleno con sombra de corte duro ----------------
-export type AnimalOpts = { coat: string; walk?: number; mood?: "calm" | "scared" | "howl" | "sleep" | "bark"; spot?: string };
+export type AnimalOpts = { coat: string; walk?: number; mood?: "calm" | "scared" | "howl" | "sleep" | "bark"; spot?: string;
+  /** gallina: color de las plumas (blanco por defecto) y picoteo 0..1 (la cabeza baja al piso) */
+  pluma?: string; pica?: number; lazo?: string };
 /** puntos de una elipse (rot en grados) */
 const EP = (cx: number, cy: number, rx: number, ry: number, rot = 0): P2[] => {
   const o: P2[] = [], c = Math.cos((rot * Math.PI) / 180), s = Math.sin((rot * Math.PI) / 180);
@@ -689,14 +715,20 @@ export const cow = (p: Pen, o: AnimalOpts) => {
 export const chicken = (p: Pen, o: AnimalOpts) => {
   const y = 860, a = swing(o.walk, 20);
   p.stroke([[290, y + 40], [280 + a, 970]], 8, "#f2a03a"); p.stroke([[320, y + 40], [330 - a, 970]], 8, "#f2a03a");
-  cel(p, [[232, y - 26], [184, y - 78], [196, y - 4]], "#ffffff", 7, 0.05);
-  celE(p, 300, y, 82, 62, "#ffffff", 9);
-  cel(p, [[262, y - 10], [330, y - 14], [312, y + 34], [270, y + 28]], "#eef0f4", 6, 0.05); // ala
+  const pl = o.pluma ?? "#ffffff", g = p.g;
+  cel(p, [[232, y - 26], [184, y - 78], [196, y - 4]], pl, 7, 0.05);
+  celE(p, 300, y, 82, 62, pl, 9);
+  cel(p, [[262, y - 10], [330, y - 14], [312, y + 34], [270, y + 28]], mix(pl, "#c8ccd8", 0.18), 6, 0.05); // ala
+  // cabeza: con `pica` gira hacia el piso sobre el cuello (picotear)
+  g.save(); g.translate(345, y - 30); g.rotate((o.pica ?? 0) * 1.25); g.translate(-345, -(y - 30));
   cel(p, [[355, y - 98], [368, y - 126], [380, y - 102], [392, y - 124], [400, y - 94]], "#e62117", 5, 0.05);
-  celE(p, 370, y - 64, 40, 38, "#ffffff", 8);
-  cel(p, [[402, y - 72], [442, y - 60], [402, y - 50]], "#f2a03a", 5, 0.05);
+  celE(p, 370, y - 64, 40, 38, pl, 8);
+  if (o.mood === "bark") { cel(p, [[402, y - 76], [446, y - 74], [404, y - 64]], "#f2a03a", 5, 0.05); cel(p, [[402, y - 58], [440, y - 46], [402, y - 50]], "#f2a03a", 5, 0.05); }
+  else cel(p, [[402, y - 72], [442, y - 60], [402, y - 50]], "#f2a03a", 5, 0.05);
   celE(p, 400, y - 38, 10, 14, "#e62117", 4);
-  eyeA(p, 380, y - 70, 8, o.mood === "scared" ? "scared" : undefined);
+  eyeA(p, 380, y - 70, 8, o.mood === "scared" ? "scared" : o.mood === "sleep" ? "sleep" : undefined);
+  if (o.lazo) { celE(p, 352, y - 104, 18, 13, o.lazo, 5, -20); celE(p, 330, y - 112, 18, 13, o.lazo, 5, 30); celE(p, 342, y - 106, 8, 8, o.lazo, 4); }
+  g.restore();
 };
 export const pig = (p: Pen, o: AnimalOpts) => {
   const y = 820, a = swing(o.walk), pink = "#f7a8c0";

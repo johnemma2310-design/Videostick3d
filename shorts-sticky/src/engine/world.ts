@@ -13,6 +13,7 @@ import type { Story, Env, Card, V3 } from "./types";
 import { FPS, hh, smooth } from "./timeline";
 import { buildSets, updateSets, SetRefs, moverFlotantes, type Flotantes } from "./sets";
 import { cameoDraw, fotoEstado } from "./cameo";
+import { drawProp } from "./props";
 
 export const STREET_X = 400, BEACH_X = -400;
 const lam = (p: THREE.MeshLambertMaterialParameters) => twoTone(new THREE.MeshLambertMaterial(p));
@@ -128,12 +129,13 @@ const drawCard = (c: Card) => (p: Pen) => {
     case "top": return spinTop(p, c.o);
     case "plane": return plane(p, c.o);
     case "cameo": return cameoDraw(p, c.o);
+    case "prop": return drawProp(p, c.o);
   }
 };
 
 export class World {
   root = new THREE.Group();
-  private sets: Record<string, THREE.Group> = Object.fromEntries(["park", "street", "beach", "space", "house", "elevator", "hospital", "store", "classroom", "desert", "reef", "farm", "gym"].map((k) => [k, new THREE.Group()]));
+  private sets: Record<string, THREE.Group> = Object.fromEntries(["park", "street", "beach", "space", "house", "elevator", "hospital", "store", "classroom", "desert", "reef", "farm", "gym", "gallinero", "mercado", "lago"].map((k) => [k, new THREE.Group()]));
   private setRefs!: SetRefs;
   /** objetos sueltos de cada escenario que flotan con S.flota */
   private flotan: Flotantes = {};
@@ -318,7 +320,7 @@ export class World {
   update(id: number, f: number, cam: THREE.PerspectiveCamera, scene: THREE.Scene) {
     const t = f / FPS, S = this.story.state(id, f), env = S.env, c = this.story.camAt(id, f), inSpace = S.set === "space";
     const sh = S.shake ?? 0;
-    cam.position.set(c.pos[0] + sh * Math.sin(f * 2.3), c.pos[1] + sh * Math.cos(f * 3.1), c.pos[2]); cam.up.set(0, 1, 0); cam.lookAt(...c.look);
+    cam.position.set(c.pos[0] + sh * Math.sin(f * 2.3), c.pos[1] + sh * Math.cos(f * 3.1), c.pos[2]); cam.up.set(0, 1, 0); cam.lookAt(...c.look); if (c.roll) cam.rotateZ(c.roll);
     cam.fov = c.fov; cam.near = inSpace ? 0.05 : 0.1; cam.far = 5000; cam.updateProjectionMatrix(); cam.updateMatrixWorld(); cam.layers.enable(NOINK);
     for (const [k, g] of Object.entries(this.sets)) g.visible = k === S.set;
     const focus = new THREE.Vector3(...c.look), sunDir = this.shotSun(id);
@@ -337,18 +339,19 @@ export class World {
     const su = this.skyMat.uniforms; SKY[env].forEach((h, i) => untone(h, su["c" + i].value));
     const e = LOOK.day.sky.e.map((d) => THREE.MathUtils.degToRad(d)); su.e.value.set(e[1], e[2], e[3], e[4]);
     this.sky.position.copy(cam.position); this.starPts.position.copy(cam.position);
-    const [fc, fn, ff] = FOG[env]; untone(fc, this.fog.color); this.fog.near = fn; this.fog.far = ff; scene.fog = this.fog; scene.background = null;
+    const [fc, fn, ff] = FOG[env], nb = S.niebla ?? 1; untone(fc, this.fog.color); this.fog.near = fn * nb; this.fog.far = ff * nb; scene.fog = this.fog; scene.background = null;
     this.stars.uT.value = t; this.stars.uFade.value = inSpace ? 1 : S.stars ?? (env === "night" ? 0.8 : 0);
     // sky objects
     const place = (m: THREE.Object3D, dir: THREE.Vector3, d: number) => { m.position.copy(cam.position).addScaledVector(dir, d); m.quaternion.copy(cam.quaternion); };
-    place(this.sunDisc, SUN_DIR, 600); place(this.sunGlow, SUN_DIR, 610); place(this.moonDisc, MOON_DIR, 560);
-    const outdoors = ["park", "street", "beach", "desert", "farm"].includes(S.set);
+    const sunD = S.sunDir ? this.v.set(...S.sunDir).normalize().clone() : SUN_DIR;
+    place(this.sunDisc, sunD, 600); place(this.sunGlow, sunD, 610); place(this.moonDisc, MOON_DIR, 560);
+    const outdoors = ["park", "street", "beach", "desert", "farm", "mercado", "lago"].includes(S.set);
     this.sunDisc.visible = this.sunGlow.visible = outdoors && (S.sunDisc ?? env === "day");
     const md = S.moonDisc ?? { show: env === "night" ? 1 : 0, bright: 1 };
     this.moonDisc.visible = outdoors && md.show > 0.01; this.moonDisc.scale.setScalar(70 * md.show);
     const mb = env === "day" ? 0.75 * md.bright : 1.25 * md.bright; this.moonMat.color.setRGB(mb, mb, mb * 1.02); this.moonMat.opacity = env === "day" ? 0.7 : 1;
     place(this.milky, MILKY_DIR, 1500); this.milky.rotateZ(0.7); (this.milky.material as THREE.MeshBasicMaterial).opacity = S.milky ?? 0; this.milky.visible = (S.milky ?? 0) > 0.01 && !inSpace;
-    this.clouds.forEach((m, i) => { const a = (i / 18) * Math.PI * 2 + hh(i, 20), d = 500 + hh(i, 21) * 400; m.position.set(cam.position.x + Math.cos(a) * d, 90 + hh(i, 22) * 220, cam.position.z + Math.sin(a) * d); m.quaternion.copy(cam.quaternion); m.visible = !inSpace && env !== "night" && env !== "underwater" && ["park", "street", "beach", "desert", "farm"].includes(S.set); });
+    this.clouds.forEach((m, i) => { const a = (i / 18) * Math.PI * 2 + hh(i, 20), d = 500 + hh(i, 21) * 400; m.position.set(cam.position.x + Math.cos(a) * d, 90 + hh(i, 22) * 220, cam.position.z + Math.sin(a) * d); m.quaternion.copy(cam.quaternion); m.visible = !inSpace && env !== "night" && env !== "underwater" && ["park", "street", "beach", "desert", "farm", "mercado", "lago"].includes(S.set); });
     updateSets(this.setRefs, S, f);
     moverFlotantes(this.flotan, S, f);
     // ---- snowy park (the pole) ----
@@ -402,7 +405,7 @@ export class World {
       breath.push(wide ? 0 : Math.sin(t * 2.4 + cd.x * 1.7 + cd.z * 2.3));
       st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}${cd.kind === "cameo" ? "|" + fotoEstado(cd.o.foto) : ""}`, x: cd.x, y, z: cd.z, size, scale: s, wide, xbody: xb, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);
-      const grounded = (cd.y ?? 0) < 0.05 && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
+      const grounded = ((cd.y ?? 0) < 0.05 || (S.pisos ?? []).some((h) => Math.abs((cd.y ?? 0) - h) < 0.05)) && !inSpace && env !== "night" && env !== "underwater" && cd.kind !== "wave";
       casts.push(grounded && d * s < 60);
       // con sombra de silueta solo queda la mancha de contacto bajo los pies
       if (grounded && d * s < 40) blob(st, sunDir, cd.x, y, cd.z, (wide ? 2.2 : cd.kind === "sticky" || cd.kind === "person" ? 0.8 : 0.6) * s, 1, false);

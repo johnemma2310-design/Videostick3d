@@ -18,6 +18,9 @@ Para ubicar algo dentro de un escenario, usa `at(ORIGIN.house, x, y, z)`.
 | `desert` | 0, 0, -450 | Dunas, mesetas, cactus y un observatorio con cúpula | Apagón, Luna |
 | `reef` | -400, 0, 450 | Corales y algas; `spawn` es el desove de corales | Luna |
 | `farm` | 400, 0, 450 | Surcos, granero rojo, silo, cerca y paja | Luna, Rotación |
+| `gallinero` | 420, 0, 800 | Cuarto de madera 8 × 7 m: 4 nidos con paja y huevos (fondo), percha (izq.), comedero y bebedero (der.), paca y letrero GALLINERO. Libre: x −2..2, z −2..3 | Gallinas |
+| `mercado` | −400, 0, −450 | Plaza con 5 puestos de toldo a rayas (FRUTAS, PIEDRITAS en x 0 z −4.4, SEMILLAS, PAN, MAÍZ), cajas con fruta, papel picado y edificios atrás | Gallinas |
+| `lago` | 400, 0, −450 | Orilla de pasto (z > 0), agua en y −0.25 que se ve de arriba y de abajo (`env: "underwater"` con la cámara abajo), fondo en y −3 con piedras y algas, juncos y **muelle** de x ±0.9, z +1..−7.75, tablas en y 0.39 | Peces |
 | `gym` | 300, 0, 800 | Gimnasio de colores: piso de goma con motitas, tapetes de colores, espejo grande, rack de mancuernas, banco con barra y discos, árbol de discos, 2 caminadoras, saco de boxeo, pesas rusas, báscula grande y carteles (¡TÚ PUEDES!, SIN EXCUSAS, ¡UNA MÁS!, TOMA AGUA). Flags `bascula`, `saco`, `cinta` | Músculo (prueba `PruebaH`) |
 
 ### Sin gravedad: `flota` (0..1)
@@ -72,3 +75,14 @@ Son los textos grandes de arriba (y = 300), por ejemplo `HORA 0` o `LA VÍA LÁC
 
 - Usa máximo 3 o 4 palabras.
 - Elige el color de `PALETA.titulo` en `elenco.ts`.
+
+## Objetos (props), profundidad y cámara (nov 2026)
+
+- **`kind: "prop"`** (`engine/props.ts`, ayuda `prop(tipo, pos, s, {on, k, txt, col, anillos})`): satelite, celular (pantalla `txt`: mapa / blanco / senal / negro), cono, reloj (`k` = minutero), letrero (`txt`, `k: 1` con postes), muneco (`k` = derretido), oso, bola, paraguas, mapa, nube (`on` = lluvia), planeta (Tierra o Urano con `anillos`), linterna, foco, router, zzz, rayo, moneda, papel, pasto, arbusto, pino, poste, planta, charco. En el piso proyectan su silueta; con `y` > 0 flotan.
+- **Profundidad:** `capaCerca(cam, tipo, lado)` pone pasto / arbusto / pino / poste / planta a ~1.2 m de la cámara en una esquina de abajo (no tapa el centro). Úsalo con `dofAt` cInf 5–7 para que salga borroso.
+- **`niebla`** en el `SceneState` (1 normal, 0.5 = el doble de niebla) y **`sunDir`** (dirección del disco del sol, p. ej. `[-0.1, 0.64, -0.76]` = sol alto).
+- **`roll`** en la cámara (`Cam`, rad) para planos inclinados (usa una cámara-función).
+- Sticky con **`gafas: true`** (gafas de sol) en `StickyOpts`.
+- Ayudas de toma en `engine/tomas.ts`: `K`, `at`, `orbit`, `punch`, `withPunch`, `keysPunch`, `entra`, `armarTomas(CUTS, TOTAL, SHOTCAM)`, `flo` (flota), `cae` (cae con rebote), `vuela` (tiro parabólico), `spinC`, `brinca`. Junto con `caraEn` y `conSalto` (`timeline.ts`) y la `Portada` (`portada.tsx`) bastan para armar un short nuevo.
+- **Nuevos objetos (nov 2026):** lupa, rayosx (molleja con piedritas; `k` = apretón), molcajete (`k` = molienda), maiz, pan, piedras, piedrita, costal (`txt`), pecera (pez que nada y abre la boca; `k` = fase), branquias (esquema: el agua entra por la boca y sale por las branquias; `k` = fase), tanque, burbujas (`k` = subida), mesa.
+- **`pisos`** en el `SceneState` (alturas en m): una tarjeta parada a esa altura (muelle 0.39, mesa 0.82, cama 0.91) también proyecta su silueta.

@@ -10,6 +10,7 @@ import type { SceneState } from "./types";
 export const ORIGIN = {
   house: [0, 0, 800], elevator: [60, 0, 800], hospital: [120, 0, 800], store: [180, 0, 800], classroom: [240, 0, 800],
   desert: [0, 0, -450], reef: [-400, 0, 450], farm: [400, 0, 450], gym: [300, 0, 800],
+  gallinero: [420, 0, 800], mercado: [-400, 0, -450], lago: [400, 0, -450],
 } as const;
 
 const lam = (c: string | THREE.MeshLambertMaterialParameters) => twoTone(new THREE.MeshLambertMaterial(typeof c === "string" ? { color: c } : c));
@@ -83,6 +84,8 @@ export type SetRefs = {
   storeProds: { inst: THREE.InstancedMesh; base: THREE.Vector3[]; sx: number; last: number }[];
   /** playa: gotas y burbujas de agua del mar que suben sin gravedad */
   drops: { inst: THREE.InstancedMesh; base: { x: number; z: number; h: number; r: number; ph: number }[] };
+  /** lago: textura del agua (se mueve) */
+  lakeWater: THREE.Texture;
 };
 
 export const buildSets = (groups: Record<string, THREE.Group>, FL: Flotantes = {}): SetRefs => {
@@ -262,6 +265,68 @@ export const buildSets = (groups: Record<string, THREE.Group>, FL: Flotantes = {
     for (let k = 0; k < 6; k++) { const h = cyl(g, 0.6, 0.6, 1.0, X - 6 + k * 2.2, 0.6, Z - 10 - (k % 2) * 1.5, lam("#f2c94c"), 16); h.rotation.z = Math.PI / 2; flotante(FL, "farm", h, 2.5 + hh(k, 81) * 2.5, { sp: 1.4 }); }
     for (let k = 0; k < 10; k++) { const t = new THREE.Group(); t.position.set(X - 40 + k * 9, 0, Z - 40 - (k % 3) * 6); const tr = cyl(t, 0.2, 0.3, 2.6, 0, 1.3, 0, lam("#7a5236")); void tr; sph(t, 1.6, 0, 3.6, 0, lam("#4fae4a")); g.add(t); }
   }
+  // ================= gallinero: cuarto de madera con nidos de paja, percha, comedero y bebedero =================
+  {
+    const g = groups.gallinero, o = ORIGIN.gallinero, [X, , Z] = o;
+    const straw = ctex("straw", 512, 512, (gg, r) => { gg.fillStyle = "#e8c66a"; gg.fillRect(0, 0, 512, 512); for (let i = 0; i < 900; i++) { gg.strokeStyle = r() < 0.5 ? "rgba(180,130,50,0.55)" : "rgba(255,235,160,0.6)"; gg.lineWidth = 3; const x = r() * 512, y = r() * 512, a = r() * 6.3; gg.beginPath(); gg.moveTo(x, y); gg.lineTo(x + Math.cos(a) * 26, y + Math.sin(a) * 26); gg.stroke(); } });
+    room(g, o, 8, 7, 2.6, lam({ map: rep(straw, 4, 4) }), "#d98a4a", "#e8a35a", "#e8a35a");
+    for (let i = 0; i < 6; i++) box(g, 8, 0.05, 0.05, X, 0.4 + i * 0.42, Z - 3.38, lam("#a8643a"), false); // tablas
+    // nidos: 4 cajas con paja y huevos en la pared del fondo
+    for (let k = 0; k < 4; k++) {
+      const x = X - 2.4 + k * 1.6;
+      box(g, 1.2, 0.08, 0.8, x, 0.9, Z - 3.0, lam("#9a5a30")); box(g, 1.2, 0.5, 0.08, x, 1.15, Z - 2.62, lam("#b97d4a")); box(g, 0.08, 0.6, 0.8, x - 0.6, 1.2, Z - 3.0, lam("#9a5a30")); box(g, 0.08, 0.6, 0.8, x + 0.6, 1.2, Z - 3.0, lam("#9a5a30"));
+      sph(g, 0.45, x, 1.0, Z - 3.0, lam("#f2c94c"), 1.2, 0.35, 0.8);
+      for (let e = 0; e < 2; e++) sph(g, 0.09, x - 0.15 + e * 0.3, 1.18, Z - 2.95, lam("#fff6e6"), 0.85, 1.1, 0.85);
+    }
+    // percha (palo) a la izquierda
+    box(g, 0.1, 0.1, 4.4, X - 3.0, 1.4, Z - 0.6, lam("#7a4b2a")); for (const zz of [-2.6, 1.4]) cyl(g, 0.05, 0.05, 1.4, X - 3.0, 0.7, Z + zz, lam("#7a4b2a"), 8);
+    // comedero y bebedero
+    { const c = pieza(g, X + 2.6, 0, Z - 1.2); cyl(c, 0.35, 0.45, 0.2, 0, 0.1, 0, lam("#d84a3a")); cyl(c, 0.18, 0.18, 0.6, 0, 0.5, 0, lam("#e8402e")); sph(c, 0.2, 0, 0.8, 0, lam("#d84a3a")); for (let i = 0; i < 12; i++) sph(c, 0.04, Math.cos(i) * 0.25, 0.22, Math.sin(i) * 0.25, lam("#ffd23f")); flotante(FL, "gallinero", c, 1.2, { sp: 1.2 }); }
+    { const b = pieza(g, X + 2.6, 0, Z + 0.6); cyl(b, 0.35, 0.35, 0.12, 0, 0.06, 0, lam("#2f86d6")); const w = cyl(b, 0.3, 0.3, 0.02, 0, 0.12, 0, new THREE.MeshBasicMaterial({ color: "#8fd8ff" })); w.layers.set(NOINK); flotante(FL, "gallinero", b, 1.0, { sp: 0.8 }); }
+    { const h = cyl(g, 0.5, 0.5, 1.0, X - 2.2, 0.5, Z + 1.8, lam("#f2c94c"), 16); h.rotation.z = Math.PI / 2; flotante(FL, "gallinero", h, 1.4, { sp: 1 }); }
+    const wm = new THREE.MeshBasicMaterial({ color: "#8fd0ff" }); R.windows.push(wm); plane(g, 1.4, 0.9, X + 3.88, 1.7, Z - 0.2, wm, -Math.PI / 2).layers.set(NOINK);
+    plane(g, 1.8, 0.45, X, 2.25, Z - 3.38, new THREE.MeshBasicMaterial({ map: label("gallSign", "GALLINERO", "#ffd23f", "#d84a3a") })).layers.set(NOINK);
+  }
+  // ================= mercado: plaza con puestos de toldo a rayas, cajas de fruta, papel picado y edificios atrás =================
+  {
+    const g = groups.mercado, [X, , Z] = ORIGIN.mercado;
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(320, 320).rotateX(-Math.PI / 2), lam({ map: rep(floorTex("plaza", "#e4c9a0", "#d8b88a", 8), 60, 60) })); ground.position.set(X, 0, Z); ground.receiveShadow = true; g.add(ground);
+    const STALLS: [number, number, string, string, string][] = [[-4.2, -3.2, "#d84a3a", "FRUTAS", "#ffd23f"], [0, -4.4, "#2f86d6", "PIEDRITAS", "#ffffff"], [4.2, -3.2, "#3fa34d", "SEMILLAS", "#ffd23f"], [-8, -6, "#e36fa8", "PAN", "#ffffff"], [8, -6, "#f08a2c", "MAÍZ", "#ffffff"]];
+    const FR = ["#ff5a4a", "#ffd23f", "#6bd36b", "#ff9a3c", "#9b6bff"];
+    STALLS.forEach(([dx, dz, col, txt, fg], k) => {
+      const x = X + dx, z = Z + dz;
+      box(g, 2.6, 0.9, 1.1, x, 0.45, z, lam("#b97d4a")); box(g, 2.8, 0.08, 1.3, x, 0.92, z, lam("#8a5a34"));
+      for (const [px, pz] of [[-1.3, -0.6], [1.3, -0.6], [-1.3, 0.6], [1.3, 0.6]]) cyl(g, 0.05, 0.05, 2.4, x + px, 1.2, z + pz, lam("#7a4b2a"), 8);
+      const aw = ctex(`awn${k}`, 256, 64, (gg) => { for (let i = 0; i < 8; i++) { gg.fillStyle = i % 2 ? "#ffffff" : col; gg.fillRect(i * 32, 0, 32, 64); } });
+      const top = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 1.6), lam({ map: aw })); top.position.set(x, 2.45, z); top.rotation.x = 0.18; top.castShadow = true; g.add(top);
+      for (let i = 0; i < 4; i++) { box(g, 0.55, 0.3, 0.45, x - 0.9 + i * 0.6, 1.11, z, lam("#c98f5a")); for (let j = 0; j < 4; j++) sph(g, 0.09, x - 1.02 + i * 0.6 + (j % 2) * 0.22, 1.32, z - 0.1 + (j >> 1) * 0.2, lam(txt === "PIEDRITAS" ? ["#9aa0a8", "#b8b0a4", "#7a7a84"][j % 3] : FR[(i + j + k) % 5])); }
+      plane(g, 2.0, 0.42, x, 1.95, z + 0.58, new THREE.MeshBasicMaterial({ map: label(`mk${k}`, txt, col, fg) })).layers.set(NOINK);
+    });
+    const walls = ["#f2b632", "#e36fa8", "#7ab8ff", "#9be08a", "#ffb47a"];
+    for (let k = 0; k < 9; k++) { const w = 5 + hh(k, 3) * 3, h = 5 + hh(k, 4) * 6, zb = Z - 16 - hh(k, 5) * 2; box(g, w, h, 4, X - 22 + k * 5.6, h / 2, zb, lam(walls[k % 5])); for (const j of [-1.2, 1.2]) plane(g, 1.0, 1.2, X - 22 + k * 5.6 + j, h * 0.6, zb + 2.02, lam("#2c3a56")); }
+    for (let i = 0; i < 18; i++) { const fl = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.45), lam({ color: FR[i % 5], side: THREE.DoubleSide })); fl.position.set(X - 9 + i * 1.05, 3.3 - Math.sin((i / 17) * Math.PI) * 0.5, Z - 2.0); g.add(fl); }
+  }
+  // ================= lago: orilla de pasto, agua (se ve de arriba y de abajo), fondo con piedras y algas, muelle =================
+  {
+    const g = groups.lago, [X, , Z] = ORIGIN.lago;
+    const shore = new THREE.Mesh(new THREE.PlaneGeometry(320, 160).rotateX(-Math.PI / 2), lam({ map: rep(grassHD(), 40, 20) })); shore.position.set(X, 0, Z + 80); shore.receiveShadow = true; g.add(shore);
+    const far = new THREE.Mesh(new THREE.PlaneGeometry(320, 120).rotateX(-Math.PI / 2), lam({ map: rep(grassHD(), 40, 15) })); far.position.set(X, 0.05, Z - 110); far.receiveShadow = true; g.add(far);
+    box(g, 320, 3.2, 0.4, X, -1.5, Z + 0.2, lam("#8a6a4a"), false);
+    const bed = ctex("lakeBed", 256, 256, (gg, r) => { gg.fillStyle = "#b89a6a"; gg.fillRect(0, 0, 256, 256); for (let i = 0; i < 300; i++) { gg.fillStyle = r() < 0.5 ? "rgba(120,100,70,0.4)" : "rgba(220,200,150,0.4)"; gg.beginPath(); gg.arc(r() * 256, r() * 256, 2 + r() * 5, 0, 6.3); gg.fill(); } });
+    const bottom = new THREE.Mesh(new THREE.PlaneGeometry(320, 52).rotateX(-Math.PI / 2), lam({ map: rep(bed, 40, 8) })); bottom.position.set(X, -3, Z - 26); bottom.receiveShadow = true; g.add(bottom);
+    const wt = ctex("lakeWater", 512, 512, (gg, r) => { gg.fillStyle = "#3a9ad0"; gg.fillRect(0, 0, 512, 512); gg.strokeStyle = "rgba(220,240,255,0.6)"; gg.lineWidth = 4; for (let i = 0; i < 50; i++) { gg.beginPath(); gg.arc(r() * 512, r() * 512, 12 + r() * 18, 3.6, 5.8); gg.stroke(); } });
+    const wtr = rep(wt, 50, 16);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(320, 100).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: wtr, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false }));
+    water.position.set(X, -0.25, Z - 50); g.add(water); R.lakeWater = wtr;
+    const rock = lam("#8a8f9a"), weed = lam("#4f9a3c");
+    for (let k = 0; k < 26; k++) { const x = X - 14 + hh(k, 51) * 28, z = Z - 2 - hh(k, 52) * 20; if (Math.abs(x - X) < 2 && z > Z - 9) continue; if (k % 2) sph(g, 0.5 + hh(k, 53) * 0.7, x, -2.8, z, rock, 1.4, 0.7, 1.1); else { const h = 1.2 + hh(k, 54) * 1.4, w = new THREE.Mesh(new THREE.BoxGeometry(0.1, h, 0.04).translate(0, h / 2, 0), weed); w.position.set(x, -3, z); g.add(w); R.weeds.push(w); } }
+    for (let k = 0; k < 30; k++) { const x = X - 12 + hh(k, 61) * 24; if (Math.abs(x - X) < 1.6) continue; const h = 0.8 + hh(k, 62) * 0.7, z = Z - 0.3 - hh(k, 63) * 0.6; cyl(g, 0.025, 0.035, h, x, h / 2 - 0.25, z, lam("#5a8a3a"), 6); sph(g, 0.05, x, h - 0.2, z, lam("#7a4b2a"), 1, 2.2, 1); } // juncos
+    // muelle de madera hacia el agua (z de +1 a -8), tablas a 0.35 m
+    const wood = lam("#b97d4a"), wood2 = lam("#c98f5a"), dark = lam("#7a4b2a");
+    for (let i = 0; i < 18; i++) box(g, 1.8, 0.08, 0.46, X, 0.35, Z + 1 - i * 0.5, i % 2 ? wood : wood2);
+    for (let i = 0; i < 5; i++) for (const sx of [-1, 1]) cyl(g, 0.08, 0.08, 4, X + sx * 0.85, -1.6, Z + 0.8 - i * 2.1, dark, 8);
+    for (let k = 0; k < 14; k++) { const t = new THREE.Group(); let x = X - 40 + k * 6 + hh(k, 71) * 3; const z = k % 2 ? Z - 58 - hh(k, 72) * 8 : Z + 9 + hh(k, 73) * 6; if (Math.abs(x - X) < 4 && z > Z) x += 8; t.position.set(x, 0, z); cyl(t, 0.2, 0.3, 2.6, 0, 1.3, 0, lam("#7a5236")); sph(t, 1.6, 0, 3.6, 0, lam("#4fae4a")); sph(t, 1.1, 0.8, 3.0, 0.3, lam("#5aa84a")); g.add(t); }
+  }
   // ================= gym: piso de goma, espejo, mancuernas, barra con discos, banco, caminadoras, saco y báscula =================
   {
     const g = groups.gym, o = ORIGIN.gym, [X, , Z] = o;
@@ -381,6 +446,7 @@ export const updateSets = (R: SetRefs, S: SceneState, f: number) => {
   R.monitor.color.set("#ffffff"); R.genLight.color.set(Math.floor(t * 3) % 2 ? "#3aff6a" : "#1a5a2a");
   for (const m of R.storeLights) m.color.set(lit > 0.5 ? "#ffffff" : "#30303a");
   R.globe.rotation.y = t * 1.5;
+  R.lakeWater.offset.set(t * 0.01, t * 0.02);
   R.weeds.forEach((w, i) => { w.rotation.z = Math.sin(t * 1.3 + i) * 0.18; w.rotation.x = Math.cos(t + i * 0.7) * 0.1; });
   R.spawn.u.uT.value = t; R.spawn.u.uShow.value = S.spawn ?? 0;
   R.domeSlit.color.set(night ? "#ffd27a" : "#20202a");

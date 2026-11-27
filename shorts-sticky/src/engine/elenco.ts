@@ -75,3 +75,11 @@ export const cameo = (f: number, c: { foto: string; nombre: string }, pos: V3, q
   kind: "cameo", o: { foto: c.foto, nombre: c.nombre, quien: { ...quien, blink: blinkAt(f, 7) }, expr: o.expr, saluda: o.saluda, brillo: Math.floor(f / 3) % 4 / 4 + 0.1 },
   x: pos[0], z: pos[2], y: pos[1] || undefined, s: ESCALA.adulto,
 });
+
+// ---------- Animales con nombre (shorts "¿por qué...?") ----------
+/** Paca, la gallina protagonista: plumas canela con moño rojo (tarjeta "chicken"; usa pica 0..1 para picotear). */
+export const PACA = { coat: "#ffffff", pluma: "#e0a060", lazo: "#e8263a" } as const;
+/** Burbu, el pez amigo de Sticky: naranja con rayas blancas (tarjeta "fish"). */
+export const BURBU = { coat: "#ff8a2a", spot: "#ffffff" } as const;
+/** escala de la gallina y del pez */
+export const ESCALA_ANIMAL = { gallina: 0.8, pez: 0.5 } as const;

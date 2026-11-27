@@ -9,6 +9,8 @@ import { OUTRO_H } from "./videos/outroH";
 import { PRUEBAH } from "./videos/pruebaH";
 import { MUSCULO } from "./videos/musculo";
 import { GRAVEDAD } from "./videos/gravedad";
+import { GALLINAS } from "./videos/gallinas";
+import { PECES } from "./videos/peces";
 import { dims, type Story } from "./engine/types";
 import { portadaStory } from "./engine/portada";
 import { getInputProps } from "remotion";
@@ -21,8 +23,10 @@ const OutroH = makeShort(OUTRO_H);
 const PruebaH = makeShort(PRUEBAH);
 const Musculo = makeShort(MUSCULO);
 const Gravedad = makeShort(GRAVEDAD);
+const Gallinas = makeShort(GALLINAS);
+const Peces = makeShort(PECES);
 // Portada (miniatura) de la historia elegida con --props='{"historia":"gravedad"}' (por defecto la del último short)
-const HISTORIAS: Record<string, Story> = { gravedad: GRAVEDAD };
+const HISTORIAS: Record<string, Story> = { gravedad: GRAVEDAD, gallinas: GALLINAS, peces: PECES };
 const portadaDe = (hz: boolean) => {
   const cache: Record<string, React.FC> = {};
   return () => {
@@ -39,6 +43,8 @@ export const Root: React.FC = () => (
     <Composition id="Luna" component={Luna} durationInFrames={LUNA.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Rotacion" component={Rotacion} durationInFrames={ROTACION.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Gravedad" component={Gravedad} durationInFrames={GRAVEDAD.TOTAL} fps={30} width={1080} height={1920} />
+    <Composition id="Gallinas" component={Gallinas} durationInFrames={GALLINAS.TOTAL} fps={30} width={1080} height={1920} />
+    <Composition id="Peces" component={Peces} durationInFrames={PECES.TOTAL} fps={30} width={1080} height={1920} />
     <Composition id="Portada" component={Portada} durationInFrames={1} fps={30} width={1080} height={1920} />
     <Composition id="PortadaH" component={PortadaH} durationInFrames={1} fps={30} width={1920} height={1080} />
     <Composition id="Outro" component={Outro} durationInFrames={OUTRO.TOTAL} fps={30} width={1080} height={1920} />

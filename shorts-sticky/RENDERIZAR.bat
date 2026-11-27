@@ -2,17 +2,19 @@
 chcp 65001 >nul
 setlocal
 cd /d "%~dp0"
-rem Uso:  RENDERIZAR.bat apagon | luna | rotacion | musculo | gravedad
+rem Uso:  RENDERIZAR.bat apagon | luna | rotacion | musculo | gravedad | gallinas | peces
 rem Los videos con H=1 son horizontales (1920x1080): llevan el cierre horizontal out\outro_final_h.mp4 (composicion OutroH).
 rem Deja el video final (con subtitulos y cierre "suscribete") en la carpeta del video, al lado de su PUBLICAR.txt.
 set V=%1
 set H=
-if "%V%"=="" (echo Uso: RENDERIZAR.bat apagon ^| luna ^| rotacion ^| musculo ^| gravedad & goto fin)
+if "%V%"=="" (echo Uso: RENDERIZAR.bat apagon ^| luna ^| rotacion ^| musculo ^| gravedad ^| gallinas ^| peces & goto fin)
 if /i "%V%"=="apagon"   (set COMP=Apagon& set CARPETA=Apagon mundial - Las primeras 72 horas)
 if /i "%V%"=="luna"     (set COMP=Luna& set CARPETA=Y si la Luna desapareciera esta noche)
 if /i "%V%"=="rotacion" (set COMP=Rotacion& set CARPETA=Y si la Tierra dejara de girar 1 segundo)
 if /i "%V%"=="musculo"  (set COMP=Musculo& set CARPETA=Y si ganaras 1 kg de musculo cada hora& set H=1)
 if /i "%V%"=="gravedad" (set COMP=Gravedad& set CARPETA=Y si la gravedad se apagara 5 segundos)
+if /i "%V%"=="gallinas" (set COMP=Gallinas& set CARPETA=Por que las gallinas se tragan piedras)
+if /i "%V%"=="peces"    (set COMP=Peces& set CARPETA=Por que los peces respiran en el agua)
 if "%COMP%"=="" (echo Video desconocido: %V% & goto fin)
 where node >nul 2>&1 || (echo Falta Node.js. Instalalo desde nodejs.org & goto fin)
 where ffmpeg >nul 2>&1 || (echo Falta ffmpeg. & goto fin)

@@ -8,7 +8,7 @@ import numpy as np
 
 SR = 48000
 name, voz_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
-KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "gravedad": 1483, "outro": 326}
+KNOWN = {"apagon": 1753, "luna": 1647, "rotacion": 1581, "gravedad": 1483, "gallinas": 1434, "peces": 1386, "outro": 326}
 def frames_of(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path], capture_output=True, text=True, check=True).stdout
     return int(round(float(out.strip()) * 30))
@@ -156,6 +156,42 @@ elif name == "gravedad":
     for f in (1138, 1152, 1166): put(sfx, tone(330, 0.12, 0.001, 0.05), F(f), -13)                # ¡toc! (elevador)
     for f in (1311, 1346): put(sfx, boom(0.5, 95, 40, 0.5), F(f), -12)                       # pupitres / cama caen
     put(sfx, chime(1175, 0.9), F(1412), -17)                                                 # cameo: invitado especial
+elif name in ("gallinas", "peces"):
+    # shorts "¿por qué...?": música alegre todo el rato + un efecto corto en cada corte (whoosh / pop / boing / golpe)
+    def pop(): return tone(700, 0.09, 0.001, 0.03)
+    def boing(): return sweep(220, 700, 0.28) * 0.7
+    def blub(): return sweep(300, 900, 0.12) * 0.6
+    def cluck(): return sweep(900, 600, 0.07) * 0.5
+    def cling(): return chime(2093, 0.6)
+    if name == "gallinas":
+        CUTS = [40, 76, 118, 160, 196, 246, 290, 354, 396, 432, 468, 510, 550, 584, 626, 680, 726, 780, 838, 896, 966, 1020, 1064, 1100, 1152, 1196, 1232, 1268, 1330, 1390]
+        happy(0, L, -21, 120)
+        for f in (72, 439): put(sfx, sweep(500, 140, 0.25), F(f), -12); put(sfx, pop(), F(f) + 0.18, -14)   # ¡GLUP!
+        for f in (155, 168): put(sfx, tone(1200, 0.05, 0.001, 0.02), F(f), -12)                              # toc, toc
+        for f in range(20, 1430, 37): put(sfx, cluck(), F(f), -26, 0.4 * (-1) ** (f // 37))                    # cacareos bajitos
+        put(sfx, cling(), F(553), -14)                                                                         # ¡cling!
+        put(sfx, boom(0.4, 120, 60, 0.2), F(694), -14)                                                         # ¡ni uno!
+        for f in (877, 892, 1068): put(sfx, boom(0.35, 160, 70, 0.6), F(f), -12); put(sfx, whoosh(0.3, 0.1, 4), F(f), -18)  # ¡chas!
+        for k in range(5): put(sfx, tone(500 + 90 * k, 0.07, 0.001, 0.03), F(1238) + k * 0.05, -15, (k % 3 - 1) * 0.5)  # ¡ploc!
+        for k in range(12): put(sfx, cluck(), F(1270) + k * 0.12, -18, (k % 3 - 1) * 0.6)                    # la bandada
+        put(sfx, chime(1568, 1.2), F(1398), -16)
+    else:
+        CUTS = [40, 80, 120, 160, 222, 266, 300, 350, 404, 444, 490, 534, 590, 640, 686, 728, 776, 822, 862, 904, 940, 1004, 1064, 1110, 1162, 1196, 1250, 1316]
+        happy(0, L, -21, 112)
+        for f in (76, 186, 199, 1278, 1293): put(sfx, blub(), F(f), -12); put(sfx, blub(), F(f) + 0.12, -15)  # ¡blub! ¡glu!
+        put(sfx, whoosh(0.6, 0.3, 4), F(124), -14); put(sfx, boom(0.8, 90, 40, 0.8), F(146), -9)               # ¡splash!
+        for f in (237, 250, 262): put(sfx, boom(0.2, 200, 120, 0.5), F(f), -16)                                 # cof, cof
+        for k in range(8): put(sfx, blub(), F(306) + k * 0.1, -20, (k % 3 - 1) * 0.5)                          # se ríe en burbujas
+        for f in (495, 509, 1010, 1024, 1038): put(sfx, pop(), F(f), -12)                                      # ¡plop!
+        put(sfx, sweep(400, 1600, 0.3), F(907), -15)                                                           # ¡zas!
+        put(sfx, chime(1760, 1.2), F(1167), -13)                                                               # ¡ding!
+        put(sfx, chime(1568, 1.2), F(1349), -17)
+    for k, f in enumerate(CUTS):
+        kind = k % 4
+        if kind == 0: put(sfx, whoosh(0.5, 0.25, 6), F(f) - 0.2, -18, 0.4 * (-1) ** k)
+        elif kind == 1: put(sfx, pop(), F(f), -17, 0.3 * (-1) ** k)
+        elif kind == 2: put(sfx, boing(), F(f), -20, 0.3 * (-1) ** k)
+        else: put(sfx, whoosh(0.35, 0.15, 5), F(f) - 0.1, -19, -0.3 * (-1) ** k)
 elif name == "outro":
     happy(0, L, -19)
     put(sfx, tone(880, 0.12, 0.001, 0.05), F(28), -14)            # button pops in

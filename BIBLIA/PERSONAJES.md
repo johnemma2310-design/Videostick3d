@@ -101,6 +101,8 @@ Ficha: `node scripts/fotos.mjs FichaMusculo out/musc_ 0 0.25` (columnas musc 0, 
 | `SENOR` | El señor elegante | Sombrero de copa, bigote rizado, bastón, traje negro | Calle, parque |
 | `TOBY` | El perro de la familia | Café con mancha oscura | Casa, parque |
 | `MICHI` | La gata de la familia | Gris | Casa |
+| `PACA` | La gallina | Plumas canela y moño rojo (tarjeta `chicken`, escala `ESCALA_ANIMAL.gallina`); `pica` 0..1 = picotear, `mood: "bark"` = cacarea | Granja, gallinero |
+| `BURBU` | El pez amigo | Naranja con rayas blancas (tarjeta `fish`, `ESCALA_ANIMAL.pez`; mira a la izquierda, `mirror` = a la derecha) | Lago, arrecife |
 
 ## Extras (gente de fondo)
 
@@ -170,3 +172,6 @@ Para ver la ficha usa la composición `FichaMovimiento`: `node scripts/fotos.mjs
 3. Si necesita un dibujo nuevo (otro `kind`), créalo en `stick.ts` y después en `types.ts` y en el bucle de tarjetas de `world.ts`.
 4. Revisa cómo queda con `node scripts/fotos.mjs <Comp> prueba <frames>` antes de renderizar.
 5. Sube los cambios (ver [SINCRONIZAR.md](SINCRONIZAR.md)).
+
+- Gallinas (`chicken`): `pluma` (color), `pica` (0..1, la cabeza baja al piso), `lazo` (moño) y `mood: "bark"` (pico abierto).
+- Sticky **buzo** (`buzo: true` en `StickyOpts`): tanque amarillo, visor y snorkel. Con **gafas de sol**: `gafas: true`.

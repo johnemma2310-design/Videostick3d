@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import type { StickyOpts, PersonOpts, AnimalOpts, CarOpts } from "./stick";
 import type { CameoOpts } from "./cameo";
+import type { PropOpts } from "./props";
 import type { Portada } from "./portada";
 export type V3 = [number, number, number];
 export type Env = "day" | "dusk" | "night" | "space" | "underwater";
-export type SetName = "park" | "street" | "beach" | "space" | "house" | "elevator" | "hospital" | "store" | "classroom" | "desert" | "reef" | "farm" | "gym";
+export type SetName = "park" | "street" | "beach" | "space" | "house" | "elevator" | "hospital" | "store" | "classroom" | "desert" | "reef" | "farm" | "gym" | "gallinero" | "mercado" | "lago";
 export type Card =
   | { kind: "sticky"; o: StickyOpts; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean }
   | { kind: "person"; o: PersonOpts; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean }
@@ -16,7 +17,9 @@ export type Card =
   | { kind: "top"; o: { col: string; t: number; tilt: number }; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean }
   | { kind: "plane"; o: { body: string }; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean }
   /** tarjeta de cameo: una persona sostiene el marco con la foto de un invitado (ver engine/cameo.ts) */
-  | { kind: "cameo"; o: CameoOpts; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean };
+  | { kind: "cameo"; o: CameoOpts; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean }
+  /** objeto (satélite, celular, cono, reloj, letrero, muñeco de nieve, oso, paraguas, mapa, nube, pasto...): ver engine/props.ts */
+  | { kind: "prop"; o: PropOpts; x: number; y?: number; z: number; s?: number; roll?: number; mirror?: boolean };
 export type SpaceState = {
   sun?: { pos: V3; r: number; lit: boolean };
   earth?: { pos: V3; r: number; rot: number; tilt?: number; prec?: number; axis?: boolean };
@@ -44,8 +47,15 @@ export type SceneState = {
   /** sin gravedad 0..1: los objetos sueltos del escenario (muebles, pesas, pacas, bancas, productos, agua) se elevan y giran.
    *  0 = todo en su lugar (por defecto). Para que caigan con rebote usa flotaCae() de sets.ts. */
   flota?: number;
+  /** dirección hacia el disco del sol en el cielo (por defecto bajo, hacia -z). Ej. [0, 1, -0.3] = el sol casi arriba */
+  sunDir?: V3;
+  /** niebla del fondo: multiplica la distancia de la niebla (1 = normal, 0.5 = el doble de niebla) */
+  niebla?: number;
+  /** alturas (m) que cuentan como piso para las sombras: una tarjeta parada a esa altura (muelle, mesa, cama) proyecta su silueta */
+  pisos?: number[];
 };
-export type Cam = { pos: V3; look: V3; fov: number };
+/** roll = giro de la cámara sobre su eje (rad), para planos inclinados */
+export type Cam = { pos: V3; look: V3; fov: number; roll?: number };
 export type Mark = { a: number; b: number; label: string; sub: string; col: string };
 /** vertical 1080x1920 (shorts, por defecto) u horizontal 1920x1080 (videos largos) */
 export type Formato = "vertical" | "horizontal";
