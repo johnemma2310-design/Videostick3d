@@ -43,6 +43,26 @@ El dibujo está en `sticky()` de `shorts-sticky/src/engine/stick.ts`. Para ver l
 `node scripts/fotos.mjs FichaSticky out/ficha_ 0 0.5`.
 
 Expresiones (`expr`): `neutral smile lick shock sad scream happy worried shiver frozen relief sleep`.
+
+### Caras v3 exageradas (`furioso llora susto sorpresa feliz`)
+
+![Ficha de caras](fotos/caras_ficha.jpg)
+
+Para los shorts de niños: cada una trae un efecto que se lee a escala de short. Sirven igual para Sticky y para las personas
+del elenco (las dibuja `caraV3` en `stick.ts`). Las caras viejas no cambiaron: si no usas un nombre nuevo, todo se ve igual.
+
+| `expr` | Cómo se ve | Cuándo |
+|---|---|---|
+| `furioso` | **Venita roja** en la frente (cruz de 4 trazos que late), cejas muy en V y dientes apretados | Golpes, coscorrones, "¡otra vez!" |
+| `llora` | Ojos apretados `> <`, **dos chorritos de lágrimas** con gotas que bajan y caen, boca de puchero que tiembla | Después de una caída, cuando algo sale mal |
+| `susto` | Ojos chiquitos, **gota de sudor azul** en la sien que resbala, mueca de dientes | Antes del golpe, cuenta atrás, "¡oh, no!" |
+| `sorpresa` | **Ojos enormes**, cejas muy arriba y boca en O | Lo increíble, la portada |
+| `feliz` | Ojos cerrados en arco `^ ^`, mejillas rosas y sonrisa enorme | Celebrar, saludar al final |
+
+- Las animadas (`furioso`, `llora`, `susto`) reciben el cuadro en `o.t`; `world.ts` lo pone solo (de 2 en 2 cuadros).
+- Hablando (`talk` de la voz) conservan el efecto: los dientes se separan, la O y el puchero se abren más.
+- Ficha: `node scripts/fotos.mjs FichaCaras out/caras_ 0 0.3` (fila 4 = caras viejas para comparar).
+- Para que la cara cambie justo con la palabra clave usa `caraEn` (ver `CALIDAD.md`, «Cara al ritmo de la voz»).
 Brazos (`arm`): `down icecream up cheer wave phone candle flash point fly hug cover flex curl`
 (`flex` = saca bíceps con los dos brazos, `curl` = mancuerna roja en la mano derecha; también sirven para el elenco).
 

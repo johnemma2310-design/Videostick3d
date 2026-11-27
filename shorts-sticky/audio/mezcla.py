@@ -1,6 +1,6 @@
 # Mezcla voz + música + efectos sintetizados para los shorts de Sticky. Uso:
 #   python -I audio/mezcla.py apagon|luna|rotacion public/voz_<x>.wav out/<x>_mezcla.wav [out/<x>_mudo.mp4]
-# Un video sin entrada propia aquí (p. ej. musculo) usa una mezcla genérica (música alegre + pads suaves) y toma la
+# Un video sin entrada propia aquí (p. ej. musculo) usa una mezcla genérica (música alegre + acentos cortos) y toma la
 # duración del 4.º argumento (el video mudo) con ffprobe.
 import subprocess, sys
 from functools import lru_cache
@@ -20,7 +20,13 @@ db = lambda x: 10 ** (x / 20)
 music = np.zeros((N, 2), np.float32); sfx = np.zeros((N, 2), np.float32)
 
 
-def lp(x, k): k = max(1, int(k)); return np.convolve(x, np.ones(k) / k, "same")
+def lp(x, k):
+    # media movil centrada (igual que convolve "same" con ventana plana, pero rapido con cumsum)
+    k = max(1, int(k))
+    if k < 256: return np.convolve(x, np.ones(k) / k, "same")
+    c = np.concatenate(([0.0], np.cumsum(x, dtype=np.float64))); n = len(x); i = np.arange(n)
+    lo2 = np.clip(i - k // 2, 0, n); hi2 = np.clip(lo2 + k, 0, n)
+    return ((c[hi2] - c[lo2]) / k).astype(x.dtype if x.dtype.kind == "f" else np.float64)
 def put(buf, sig, t0, gain, pan=0.0):
     i = int(t0 * SR)
     if i >= N or i < 0: return
@@ -47,6 +53,7 @@ def sweep(f0, f1, dur):
     return np.sin(2 * np.pi * np.cumsum(fr) / SR) * np.minimum(1, t / 0.05) * np.minimum(1, (dur - t) / 0.2)
 def chime(f, dur=1.6): return tone(f, dur, 0.002, 0.5, (1, 0.0, 0.3, 0, 0.12))
 def noise_bed(dur, k=90, mod=14):
+    dur = min(dur, 2.5)  # solo acento corto con entrada y salida, nunca ambiente continuo
     n = int(dur * SR); w = lp(rng.normal(0, 1, n), k) * 6; w *= 0.6 + 0.4 * np.sin(np.linspace(0, mod, n))
     tt = np.arange(n) / SR; return w * np.minimum(1, np.minimum(tt / 0.5, (dur - tt) / 0.5))
 def bark():
@@ -75,9 +82,10 @@ def happy(t0, t1, gain, bpm=104):
         if k % 4 == 0: put(music, tone(ch[0] / 2, beat * 2, 0.01, 0.6, (1, 0.3)), t, gain - 3)
         t += beat / 2; k += 1
 def pad(freqs, t0, t1, gain, a=1.0):
-    n = int((t1 - t0) * SR); t = np.arange(n) / SR
+    # SOLO acento corto (max 2.5 s, entra y sale): nunca una cama continua. t1 se ignora salvo que sea mas corto.
+    dur = min(t1 - t0, 2.5); n = int(dur * SR); t = np.arange(n) / SR
     s = sum(np.sin(2 * np.pi * f * t + np.sin(2 * np.pi * 0.2 * t) * 0.6) for f in freqs) / len(freqs)
-    put(music, s * np.minimum(1, t / a) * np.minimum(1, (t1 - t0 - t) / 0.8), t0, gain)
+    put(music, s * np.minimum(1, t / min(a, 0.6)) * np.minimum(1, (dur - t) / 0.9), t0, gain)
 DARK, COLD, SPACE = [73.4, 110, 138.6], [61.7, 92.5, 123.5, 185], [110, 164.8, 220]
 
 if name == "apagon":
@@ -156,7 +164,7 @@ elif name == "outro":
     put(sfx, tone(660, 0.12, 0.001, 0.05), F(90), -14)             # comment bubble
     put(sfx, tone(520, 0.25, 0.002, 0.12), F(158), -12); put(sfx, tone(1040, 0.2, 0.002, 0.1), F(162), -14)  # cartel cameo
 elif name != "rotacion":
-    # genérica para videos nuevos (largos): música alegre suave con descansos de pad cada ~40 s y un golpe en cada corte
+    # genérica para videos nuevos (largos): música alegre bajita; cada ~40 s un acento corto de 2.5 s con un golpe de whoosh
     t0 = 0.0
     while t0 < L:
         t1 = min(L, t0 + 40); happy(t0, t1, -24)
@@ -186,8 +194,20 @@ else:
 voz = subprocess.run(["ffmpeg", "-v", "error", "-i", voz_path, "-ac", "1", "-ar", str(SR), "-f", "f32le", "-"], capture_output=True).stdout
 v = np.frombuffer(voz, np.float32)[:N]; vv = np.zeros(N, np.float32); vv[:len(v)] = v
 ve = lp(np.abs(vv), int(0.25 * SR)); ve /= ve.max() + 1e-9
-duck = 1 - 0.45 * np.clip(ve * 4, 0, 1)
-out = vv[:, None] + music * duck[:, None] + sfx * db(-2)
+# Regla: mientras habla la voz, la musica queda ~12 dB por debajo (RMS); en pausas sube 6 dB.
+VOZ_SOBRE_MUSICA = 12.0
+hab = np.clip(ve * 4, 0, 1)
+g = db(6) - (db(6) - 1) * hab
+mono = music.mean(axis=1) * g
+sp = (ve > 0.15) & (np.abs(mono) > 1e-4)
+vr = np.sqrt(np.mean(vv[(ve > 0.15)] ** 2)) + 1e-9
+mr = np.sqrt(np.mean(mono[sp] ** 2)) + 1e-9 if sp.any() else vr
+k_m = float(np.clip(vr * db(-VOZ_SOBRE_MUSICA) / mr, db(-30), db(12)))
+music = music * (g * k_m)[:, None]
+hb = ve > 0.15
+mus_hab = np.sqrt(np.mean(music.mean(axis=1)[sp] ** 2)) + 1e-9; sfx_hab = np.sqrt(np.mean((sfx.mean(axis=1) * db(-2))[hb] ** 2)) + 1e-9
+print("voz-musica %.1f dB | voz-sfx %.1f dB (mientras habla)" % (20 * np.log10(vr / mus_hab), 20 * np.log10(vr / sfx_hab)))
+out = vv[:, None] + music + sfx * db(-2)
 k = int(0.25 * SR); out[-k:] *= np.linspace(1, 0, k)[:, None]
 out *= db(-1) / max(1e-6, np.abs(out).max())
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", "-", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "48000", out_path],

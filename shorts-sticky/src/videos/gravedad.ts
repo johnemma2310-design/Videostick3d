@@ -9,7 +9,8 @@ import VOZ from "../../voz/gravedad/palabras.json";
 // 1080 | Por suerte 1120 · cinco segundos 1155 · Tres 1200 · dos 1218 · uno 1232 · PUM 1261 · vuelve 1307 · todo cae 1319 |
 // Toby aterriza 1356 · sobre Sticky 1376 | ¿Y tú...? 1416 · sin gravedad 1444
 import type { Story, SceneState, Card, V3, Cam } from "../engine/types";
-import { makeTimeline, Shot, Key, smooth, smoother, hh, gait, bocaAt, lerp } from "../engine/timeline";
+import type { Portada } from "../engine/portada";
+import { makeTimeline, Shot, Key, smooth, smoother, hh, gait, bocaAt, lerp, caraEn, conSalto } from "../engine/timeline";
 import { STREET_X, BEACH_X } from "../engine/world";
 import { band, mirrorFor, extra, card as exCard } from "../engine/crowd";
 import { ORIGIN, flotaSube, flotaCae } from "../engine/sets";
@@ -93,7 +94,13 @@ const SHOTS: Shot[] = SHOTCAM.map((c, i) => {
   const a = CUTS[i], b = i === SHOTCAM.length - 1 ? TOTAL : CUTS[i + 1] + 6;
   return typeof c === "function" ? { id: i + 1, a, b, dyn: c } : { id: i + 1, a, b, keys: entra(c, i % 2 ? 1 : -1) };
 });
-const { camAt, layersAt } = makeTimeline(SHOTS);
+const { camAt: camBase, layersAt } = makeTimeline(SHOTS);
+/** golpes con saltito de cámara (conSalto, BIBLIA/CALIDAD.md): ¡TOC! del elevador, ¡PUM!, aterrizajes. [cuadro, amp] */
+const GOLPES: (number | [number, number])[] = [1138, 1152, [FALL, 0.26], 1277, [1311, 0.16], [1346, 0.14], 1375, [1384, 0.2]];
+const camAt = (id: number, f: number): Cam => conSalto(camBase(id, f), f, GOLPES);
+type M = ([string | number, Expr] | [string, Expr, number])[];
+/** cara de Sticky al ritmo de la voz: cambia 2 cuadros antes de la palabra clave (caraEn de timeline.ts) */
+const cara = (f: number, mapa: M, base: Expr): Expr => caraEn<Expr>(VOZ, f, mapa, base);
 function swimX(f: number) { return HO[0] - 2.6 + 3.2 * smoother((f - 250) / 44); }
 
 // ---------- ayudas ----------
@@ -178,7 +185,7 @@ const state = (id: number, f: number): SceneState => {
   const cam = camAt(id, f);
   switch (id) {
     case 1: case 2: case 3: case 4: { // parque: Sticky salta y NO baja
-      const ex: Expr = f < 24 ? "happy" : f < 80 ? "shock" : id === 4 ? (f < 140 ? "worried" : "shock") : "scream";
+      const ex = cara(f, [[24, "shock"], ["no vuelve", "susto"], [80, "scream"], ["gravedad", "sorpresa"], ["cinco", "susto"], [140, "shock"]], "feliz");
       const arm: Arm = f < 24 ? "up" : id === 4 ? (f < 150 ? "cheer" : "wave") : swim(f);
       const s = stk(f, ex, arm, 0, 0, parkY(f), undefined, f < 24 ? 0 : Math.sin(f / 9) * 0.35);
       const crowd = floatPeople(parkCrowd(id, f, 21), f, 70, 2.2);
@@ -209,7 +216,7 @@ const state = (id: number, f: number): SceneState => {
     }
     case 9: { // casa: la atrapa... ¡y está furiosa!
       const y = 0.95 + Math.sin(f / 10) * 0.05, grab = f >= 323;
-      const sti = stk(f, grab ? (f < 336 ? "shock" : "scream") : "happy", grab ? "hug" : "up", HO[0] - 0.2, HO[2] + 2.0, y, undefined, grab ? Math.sin(f / 3) * 0.06 : 0);
+      const sti = stk(f, cara(f, [["michi", "feliz"], ["furiosa", "susto"]], "happy"), grab ? "hug" : "up", HO[0] - 0.2, HO[2] + 2.0, y, undefined, grab ? Math.sin(f / 3) * 0.06 : 0);
       const mich: Card = grab ? { ...cat(HO[0] + 0.2, HO[2] + 1.95, "howl", y + 0.55 + Math.abs(Math.sin(f / 2.5)) * 0.05), roll: Math.sin(f / 2) * 0.25 } : { ...spinC(cat(0, 0, "howl"), HO[0] + 0.35, 1.85, (f - 284) / 7, 0.3), z: HO[2] + 1.9 } as Card;
       return { set: "house", env: "day", tv: true, flota: 1, shake: grab && f < 336 ? 0.035 : 0, cards: [sti, mich] };
     }
@@ -223,7 +230,7 @@ const state = (id: number, f: number): SceneState => {
     case 11: { // granja: la vaca vuela junto a la cámara
       const u = (f - 398) / 30;
       const vaca: Card = { kind: "cow", o: { coat: "#fff", mood: "scared" }, x: FA[0] - 0.75 + u * 0.4, z: FA[2] + 2.0, y: 1.6 + Math.sin(u * 2) * 0.2, s: 0.95, roll: -0.25 + u * 0.18 };
-      const sti = stk(f, f < 410 ? "shock" : "happy", f < 410 ? "point" : "cheer", FA[0] + 0.85, FA[2] + 2.9, 1.15 + Math.sin(f / 9) * 0.1);
+      const sti = stk(f, cara(f, [["vaca", "sorpresa"], ["vuelan", "feliz"]], "shock"), f < 410 ? "point" : "cheer", FA[0] + 0.85, FA[2] + 2.9, 1.15 + Math.sin(f / 9) * 0.1);
       const farmer = { ...who({ ...GRANJERO, expr: "scream", arm: "up" }, [FA[0] - 1.6 + u * 0.5, 3.2 + Math.sin(u * 2.3) * 0.15, FA[2] - 0.6]), roll: 0.4 } as Card;
       return { set: "farm", env: "day", flota: 1, shake: f >= 406 && f < 414 ? 0.04 : 0, speedLines: 0.2, cards: [vaca, farmer, sti] };
     }
@@ -263,7 +270,7 @@ const state = (id: number, f: number): SceneState => {
       }
       // 18: ¡súper fuerza! levanta al obrero (que no pesa nada) con una mano
       const big = f >= 727, y0 = 0.35 + Math.sin(f / 10) * 0.05;
-      const sti = stk(f, big ? "happy" : "shock", big ? (f < 740 ? "flex" : "up") : "curl", GY[0] - 1.0, GY[2] - 1.6, y0, big ? 7 : undefined);
+      const sti = stk(f, cara(f, [["levanta", "furioso"], ["elefante", "feliz"]], "shock"), big ? (f < 740 ? "flex" : "up") : "curl", GY[0] - 1.0, GY[2] - 1.6, y0, big ? 7 : undefined);
       const lift = f >= 740 ? smooth((f - 740) / 6) : 0;
       const obr = { ...spinC(who({ ...OBRERO, expr: f >= 743 ? "happy" : "scream", arm: "cheer" }, [0, 0, 0]), GY[0] - 0.75, lerp(2.9 + Math.sin(f / 10) * 0.2, y0 + 1.72, lift), lerp(Math.sin(f / 14) * 0.8, -1.5, lift), 0.75), z: GY[2] - 1.75 } as Card; // acostado en su mano como charola
       const kid = flo(who({ ...NINO, expr: "happy", arm: "cheer" }, [GY[0] - 3.4, 0, GY[2] - 2.9], ESCALA.nino), f, 700, { up: 2.4 });
@@ -291,7 +298,7 @@ const state = (id: number, f: number): SceneState => {
       return { set: "park", env: "day", flota: 1, speedLines: 0.5, shake: 0.02, cards };
     }
     case 24: { // cara: ¡sin gravedad saldrías disparado!
-      const sti = stk(f, f < 1024 ? "worried" : "scream", f < 1024 ? swim(f) : "cover", 0, 1.5, 4.6 + Math.sin(f / 12) * 0.08, undefined, Math.sin(f / 14) * 0.12);
+      const sti = stk(f, cara(f, [["sin gravedad", "susto", 1000]], "worried"), f < 1024 ? swim(f) : "cover", 0, 1.5, 4.6 + Math.sin(f / 12) * 0.08, undefined, Math.sin(f / 14) * 0.12);
       return { set: "park", env: "day", flota: 1, shake: f >= 1024 && f < 1032 ? 0.04 : 0, cards: [sti, ...FORM.slice(1, 6).map((m) => fm({ ...m, yh: m.yh + 1 }, f, "shock", "fly"))] };
     }
     case 25: { // Sticky disparado en línea recta
@@ -300,13 +307,13 @@ const state = (id: number, f: number): SceneState => {
     }
     case 26: { // se aleja y se hace chiquito
       const dt = (f - 1085) / 30;
-      return { set: "park", env: "dusk", speedLines: 0.8, cards: [{ ...stk(f, "scream", "fly", 0, -0.5 - dt * dt * 4 - dt * 3, 5.0 + dt * 0.5), roll: 0.3 }] };
+      return { set: "park", env: "dusk", speedLines: 0.8, cards: [{ ...stk(f, cara(f, [["recta", "llora"]], "scream"), "fly", 0, -0.5 - dt * dt * 4 - dt * 3, 5.0 + dt * 0.5), roll: 0.3 }] };
     }
     case 27: { // elevador: Sticky sube y choca de cabeza con el techo: ¡toc!
       const u = f - 1122, TOP = 1.27;
       const y = u < 0 ? 0 : u < 16 ? (u / 16) * TOP : TOP - 0.35 * Math.abs(Math.sin(((u - 16) / 14) * Math.PI));
       const hit = u >= 16 && ((u - 16) % 14 < 3);
-      const sti = stk(f, u < 16 ? "happy" : hit ? "scream" : "worried", u < 16 ? "up" : "cover", EL[0] - 0.4, EL[2] + 0.15, y, undefined, Math.sin(f / 7) * 0.08);
+      const sti = stk(f, hit ? "scream" : cara(f, [[1138, "furioso"]], "feliz"), u < 16 ? "up" : "cover", EL[0] - 0.4, EL[2] + 0.15, y, undefined, Math.sin(f / 7) * 0.08);
       const papa = { ...spinC(who({ ...PAPA, expr: "shock", arm: "fly" }, [0, 0, 0]), EL[0] + 0.45, 1.65 + Math.sin(f / 9) * 0.08, 2.9 + Math.sin(f / 15) * 0.15, 0.8), z: EL[2] - 0.35 } as Card;
       return { set: "elevator", env: "day", shake: hit ? 0.05 : 0, cards: [sti, papa] };
     }
@@ -319,7 +326,7 @@ const state = (id: number, f: number): SceneState => {
       return { set: "store", env: "day", flota: fl, speedLines: 0.2, cards: [sti, mama, tend, kid] };
     }
     case 29: case 30: { // 3, 2, 1... ¡PUM!
-      const ex: Expr = id === 29 ? (f < 1230 ? "worried" : "shock") : f < FALL + 30 ? "scream" : "sad";
+      const ex = cara(f, [["tres", "susto", 1190], ["uno", "sorpresa", 1225], ["pum", "scream", 1250], [FALL + 30, "llora"]], "worried");
       const arm: Arm = id === 29 ? "up" : f < FALL ? "up" : "down";
       const cards = FORM.map((m) => fm(m, f, ex, arm));
       const pum = f >= FALL && f < FALL + 22, fall = f >= FALL && f < FALL + 34;
@@ -328,7 +335,7 @@ const state = (id: number, f: number): SceneState => {
     case 31: { // aula: los pupitres caen y rebotan; los niños aterrizan sentados
       const T0 = 1297;
       const kids = KIDS.map(([x, z], i) => cae(kidCard(i, CL[0] + x, CL[2] + z, 0, f < T0 + 8 ? "scream" : "sad", f < T0 ? "cheer" : "up"), f, T0 + (i % 3), 1.6 + i * 0.25, 0, i % 2 ? 0.25 : -0.25));
-      const sti = cae(stk(f, f < T0 + 10 ? "scream" : "sad", f < T0 ? swim(f) : "up", CL[0] + 0.0, CL[2] + 0.6, 0), f, T0 + 1, 1.5, 0, 0);
+      const sti = cae(stk(f, cara(f, [[T0 + 14, "llora"]], "scream"), f < T0 ? swim(f) : "up", CL[0] + 0.0, CL[2] + 0.6, 0), f, T0 + 1, 1.5, 0, 0);
       const land = f >= T0 + 14 && f < T0 + 24;
       return { set: "classroom", env: "day", flota: flotaCae(f, T0, 14), shake: land ? 0.08 : 0, speedLines: f >= T0 && f < T0 + 14 ? 0.6 : 0, cards: [sti, ...kids] };
     }
@@ -342,12 +349,12 @@ const state = (id: number, f: number): SceneState => {
       const t0 = 1358, tl = 26, dt = Math.max(0, f - t0), land = f >= t0 + tl;
       const ty = land ? 1.05 + 0.25 * Math.exp(-(f - t0 - tl) / 5) * Math.abs(Math.sin((f - t0 - tl) / 2.5)) : 4.8 - 4.2 * (dt / tl) ** 2;
       const toby: Card = { kind: "dog", o: { ...TOBY, mood: land ? "bark" : "scared" }, x: HO[0] - 2.35, y: ty, z: HO[2] + 1.7, s: ESCALA.perro, roll: land ? 0.1 : Math.sin(dt / 4) * 0.4 };
-      const sti = stk(f, land ? "scream" : f < 1372 ? "relief" : "shock", land ? "cover" : f < 1372 ? "wave" : "up", HO[0] - 2.4, HO[2] + 1.8, 0);
+      const sti = stk(f, cara(f, [["sobre", "sorpresa", 1370], [t0 + tl, "furioso"]], "relief"), land ? "cover" : f < 1372 ? "wave" : "up", HO[0] - 2.4, HO[2] + 1.8, 0);
       return { set: "house", env: "day", tv: true, flota: flotaCae(f, 1362, 13), shake: (f >= 1375 && f < 1381) || (f >= t0 + tl && f < t0 + tl + 12) ? 0.1 : 0, cards: [sti, toby] };
     }
     case 34: { // CAMEO: Sticky saluda al invitado especial
       const jump = f > 1440 ? Math.abs(Math.sin((f - 1440) / 6)) * 0.14 : 0;
-      const sti = stk(f, f < 1430 ? "smile" : "happy", f < 1432 ? "point" : "wave", -0.2, 1.0, jump);
+      const sti = stk(f, cara(f, [["que harias", "feliz"]], "smile"), f < 1432 ? "point" : "wave", -0.2, 1.0, jump);
       const inv = cameo(f, INVITADO_ESPECIAL, [0.75, 0, -0.4], undefined, { saluda: f >= 1426 && f % 30 < 15 });
       const toby = { ...dog(-0.75, -0.3, "bark", Math.abs(Math.sin(f / 5)) * 0.15), mirror: false };
       return { set: "park", env: "day", cards: [sti, inv, toby] };
@@ -358,9 +365,29 @@ const state = (id: number, f: number): SceneState => {
 
 const dofAt = (_id: number, _f: number) => ({ cInf: 3 });
 
+/** portada: Sticky enorme de cabeza con cara de sorpresa, Toby, la vaca y un coche flotando, y el texto gigante */
+const PORTADA: Portada = {
+  texto: ["¡SIN", "GRAVEDAD!"], textoH: ["¡SIN GRAVEDAD!"], col: "#ffd23f",
+  expr: "sorpresa", arm: "fly", set: "park", env: "day", flota: 1, blur: 14,
+  sticky: { head: [0, 1.2, 0], roll: Math.PI - 0.5 },
+  cam: { pos: [0, 1.3, 2.15], look: [0, 1.46, 0], fov: 52 },
+  camH: { pos: [0.1, 1.3, 1.95], look: [0.1, 1.42, 0], fov: 44 },
+  cosas: [
+    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -0.62, y: 0.1, z: -1.1, s: 0.5, roll: 0.45 },
+    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: -1.0, y: 1.25, z: -2.6, s: 0.4, roll: 0.45 },
+    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.3, y: 0.62, z: 0.35, s: ESCALA.perro * 0.75, roll: -0.5, mirror: true },
+  ],
+  cosasH: [
+    { kind: "cow", o: { coat: "#ffffff", mood: "scared" }, x: -1.45, y: 1.0, z: -1.2, s: 0.55, roll: 0.45 },
+    { kind: "car", o: { body: "#d84a3a", wheel: 0 }, x: 1.75, y: 1.0, z: -1.4, s: 0.48, roll: -0.4, mirror: true },
+    { kind: "dog", o: { ...TOBY, mood: "scared" }, x: 0.92, y: 0.68, z: 0.3, s: ESCALA.perro * 0.75, roll: -0.6, mirror: true },
+  ],
+};
+
 export const GRAVEDAD: Story = {
   voz: VOZ,
   cameo: INVITADO_ESPECIAL,
+  portada: PORTADA,
   TOTAL, camAt, layersAt, dofAt, state,
   MARKS: [
     { a: 44, b: 80, label: "¡NO BAJA!", sub: "sin gravedad", col: PALETA.titulo.dato },

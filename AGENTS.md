@@ -6,6 +6,8 @@ Este repositorio hace los shorts animados del canal **Curiosidades con Sticky**.
 2. [BIBLIA/](BIBLIA/): personajes, escenarios, estándar de calidad, cómo sincronizar y el registro de videos.
 
 ## Reglas que no se rompen
+**Antes de armar o renderizar, lee [BIBLIA/TRAMPAS.md](BIBLIA/TRAMPAS.md)** (errores que ya pasaron). Si algo sale mal, agrega ahí su regla.
+
 **FORMATO OFICIAL (26 nov 2026): solo shorts verticales rápidos para niños.** Lee [BIBLIA/SHORTS_NINOS.md](BIBLIA/SHORTS_NINOS.md): 35–50 s, tomas de 1.5–3 s, todo en movimiento, guion con humor (máx. 2 datos) y nadie atraviesa paredes. Ya no se hacen videos largos.
 
 - Sticky es el protagonista: cabeza blanca, cuerpo blanco y **bufanda azul**. Nada lo tapa.

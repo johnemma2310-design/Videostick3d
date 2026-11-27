@@ -8,7 +8,7 @@ import { NOINK } from "./ink";
 import { LIGHTS, LOOK, LightPreset } from "./lights";
 import { TONE, CHAR, twoTone, untone } from "./shade";
 import { grassHD, cloudHD, rep, ctex } from "./paint";
-import { type StickyOpts, sticky, person, dog, cat, bird, turtle, penguin, car, wave, cow, chicken, pig, fishCard, beetle, spinTop, plane } from "./stick";
+import { type StickyOpts, type PersonOpts, caraAnimada, sticky, person, dog, cat, bird, turtle, penguin, car, wave, cow, chicken, pig, fishCard, beetle, spinTop, plane } from "./stick";
 import type { Story, Env, Card, V3 } from "./types";
 import { FPS, hh, smooth } from "./timeline";
 import { buildSets, updateSets, SetRefs, moverFlotantes, type Flotantes } from "./sets";
@@ -396,6 +396,9 @@ export class World {
         const tk = bocaAt(this.story.voz, f);
         if (tk) (cd as { o: StickyOpts }).o = { ...cd.o, talk: tk };
       }
+      // caras v3 animadas (lágrimas, sudor, venita): el dibujo recibe el cuadro, de 2 en 2 para no redibujar de más
+      if ((cd.kind === "sticky" || cd.kind === "person") && caraAnimada(cd.o.expr) && cd.o.t === undefined)
+        (cd as { o: StickyOpts | PersonOpts }).o = { ...cd.o, t: f - (f % 2) };
       breath.push(wide ? 0 : Math.sin(t * 2.4 + cd.x * 1.7 + cd.z * 2.3));
       st.places.push({ key: `${cd.kind}|${JSON.stringify(cd.o)}${cd.kind === "cameo" ? "|" + fotoEstado(cd.o.foto) : ""}`, x: cd.x, y, z: cd.z, size, scale: s, wide, xbody: xb, mirror: !!cd.mirror, draw: drawCard(cd) });
       rolls.push(cd.roll ?? 0);

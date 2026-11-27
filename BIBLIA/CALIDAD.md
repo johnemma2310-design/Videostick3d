@@ -17,6 +17,61 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 | Personajes | Estilo v2: cuerpo con ropa y sombra de corte duro (ver `fotos/elenco_ficha.jpg`) |
 | Sombras | Cada personaje proyecta su silueta en el piso (la tarjeta se gira hacia el sol solo para la sombra) |
 
+### Cara al ritmo de la voz (`caraEn`)
+
+La cara cambia **2 cuadros antes** de la palabra clave (así se ve que el personaje reacciona a lo que dice). En la historia:
+
+```ts
+import { caraEn } from "../engine/timeline";
+// [palabra | cuadro, expr] o [palabra, expr, buscarDesde]; antes de la primera entrada va la cara base
+const ex = caraEn<Expr>(VOZ, f, [["no vuelve", "susto"], ["gravedad", "sorpresa"], ["pum", "scream", 1250], [1291, "llora"]], "feliz");
+```
+
+La palabra se busca en `palabras.json` sin acentos ni signos ("¡PUM!" = "pum") y acepta frases ("sin gravedad").
+`palabraEn(VOZ, "vaca")` da el cuadro de una palabra. Pon 6–10 cambios de cara por short, en las palabras fuertes.
+
+### Saltito de cámara en los golpes (`conSalto`)
+
+Además del `shake`, cada golpe (choque, ¡PUM!, aterrizaje) lleva un **salto corto y seco** de la imagen: en 4 cuadros la
+cámara entera (posición y mira) baja de golpe, rebota y vuelve. Se pone una sola vez envolviendo `camAt`:
+
+```ts
+const { camAt: camBase, layersAt } = makeTimeline(SHOTS);
+const GOLPES: (number | [number, number])[] = [1138, [1261, 0.26], 1277];   // cuadro del impacto o [cuadro, amp en m]
+const camAt = (id: number, f: number) => conSalto(camBase(id, f), f, GOLPES);  // amp por defecto 0.14 m
+```
+
+Usa 0.10–0.16 m si la cámara está cerca (interiores) y 0.2–0.3 m en los golpes grandes vistos de lejos.
+
+### Carteles 3D legibles
+
+- Un cartel que hay que **leer** va a la misma distancia de la cámara que el personaje enfocado: si queda muy cerca o muy
+  lejos de la cámara, el desenfoque de lente lo borra. Si es solo decoración, da igual.
+- Si la cámara mira hacia el otro lado (de -z hacia +z), lo que estaba a la derecha queda a la izquierda y un cartel plano se
+  ve por detrás (al revés, o ni se ve). Los carteles de los escenarios miran hacia +z (o hacia el centro del cuarto si están
+  en una pared de lado): para leerlos, la cámara tiene que estar del lado al que miran. Y una tarjeta con letras (`cameo`)
+  nunca lleva `mirror`.
+- Los títulos que siempre se tienen que leer van como `MARKS` (2D), no como carteles 3D.
+
+## Portada (miniatura)
+
+Una portada se tiene que entender **en 1 segundo**: personajes reconocibles y GRANDES (Sticky enorme), **una sola idea**,
+texto corto (máx. 3 palabras) **gigante con borde grueso** y algo de **miedo o sorpresa** en la cara (`sorpresa`, `susto`).
+
+- Cada historia exporta `portada: Portada` en su `Story` (ver `src/engine/portada.tsx`): `texto` (líneas en vertical),
+  `textoH` (horizontal), `col`, `expr`, `arm`, `set`, `sticky: { head, roll }` (`roll: Math.PI` = de cabeza), `cosas` /
+  `cosasH` (tarjetas flotando), `cam` / `camH` y `blur` (desenfoque del fondo).
+- Para una historia nueva agrégala en `HISTORIAS` de `src/Root.tsx`.
+- Comandos (en `shorts-sticky/`, cambia la carpeta y la historia):
+
+```
+npx remotion still src/index.ts Portada  "../<carpeta del video>/portada.png"   --props="{\"historia\":\"gravedad\"}" --gl=angle
+npx remotion still src/index.ts PortadaH "../<carpeta del video>/portada_h.png" --props="{\"historia\":\"gravedad\"}" --gl=angle --scale=0.6667
+```
+
+`Portada` sale a 1080×1920 (shorts) y `PortadaH` a 1920×1080, que con `--scale=0.6667` queda en 1280×720 (YouTube).
+Revisa que el texto no tape la cara de Sticky y que todo se lea en chiquito (mira la foto a escala 0.2).
+
 ## Formato horizontal (videos largos, retirado: solo referencia)
 
 - La historia declara `formato: "horizontal"` (`types.ts`) y en `Root.tsx` se registra con `{...dims(HISTORIA)}` → 1920×1080.
@@ -40,8 +95,12 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 |---|---|
 | Voz | edge-tts `es-MX-JorgeNeural` a `+24%` (`python -I ../tts.py es-MX-JorgeNeural +24%` dentro de `voz/<video>/`) |
 | Tiempos | `palabras.json` (cada palabra con su tiempo, frame = t·30) |
-| Música y efectos | `audio/mezcla.py`: punteos, golpes, whooshes y pads; la música baja cuando habla la voz |
+| Música y efectos | `audio/mezcla.py`: punteos, golpes y whooshes; la música baja cuando habla la voz |
+| Mezcla | La voz va **+12 dB sobre la música** mientras habla (`mezcla.py` lo calcula y lo imprime: `voz-musica 12.0 dB`); en pausas la música sube un poco |
+| Efectos | Golpes **cortos** y audibles (whoosh, pop, boing, golpe) en los cortes |
+| Ambiente | **Nada de ambiente sintético en bucle** (pads o zumbidos largos): un pad solo es un acento de 1-3 s con entrada y salida |
 | Volumen | loudnorm **-14 LUFS** |
+| Limpieza | `RENDERIZAR.bat` borra al terminar `%TEMP%\remotion-webpack-bundle-*` (cada render deja ~70 MB) |
 
 ## Subtítulos
 
@@ -66,5 +125,6 @@ Todos los videos tienen que salir **con esta calidad**. Las fotos de referencia 
 - [ ] Subtítulos sin solaparse y bien sincronizados con la voz
 - [ ] Volumen en -14 LUFS (`ffmpeg -i video.mp4 -af ebur128 -f null -`)
 - [ ] El cierre (suscríbete, like, comenta y cameo) está al final
+- [ ] `portada.png` (1080×1920) y `portada_h.png` (1280×720) en la carpeta del video
 - [ ] La carpeta del video tiene el `.mp4` y el `PUBLICAR.txt` (título calificado en vidIQ, descripción, hashtags y tags)
 - [ ] Código y `PUBLICAR.txt` subidos a GitHub (`SINCRONIZAR.bat`)

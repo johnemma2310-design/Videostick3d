@@ -84,3 +84,14 @@ comentó en el último video. Pasos:
 - Cada short se sube con ese video largo como **"Video relacionado"**. Los videos largos los hace otro proyecto (animación 2D).
 - En cada `PUBLICAR.txt` de short va la línea `VIDEO RELACIONADO: <el último video largo del canal>`.
 - Revisión: [ ] el cameo aparece con nombre; [ ] `PUBLICAR.txt` trae VIDEO RELACIONADO.
+
+## Historia y armado (tutorial "Prompt y Listo", 27 nov 2026)
+
+- **Una sola historia** que pasa por varios lugares. Cada lugar es un paso de esa historia, no temas sueltos.
+- En cada lugar los personajes **hacen algo con las manos**.
+- **La cara cambia 2 cuadros antes** de la palabra clave (helper en `timeline.ts`).
+- Las caras van claras: furioso (con venita), llorando (con lágrimas), asustado (con gota de sudor), sorprendido y feliz.
+- En cada golpe, la cámara da un **saltito** y cambia de plano.
+- **Trabajo en paralelo:** para un short nuevo, el agente principal reparte los escenarios entre ayudantes y luego une todo.
+- Cada short lleva su **portada** (`Portada`, ver `CALIDAD.md`).
+- Antes de renderizar: una hoja con unas 20 fotos, se corrige, 3–4 fotos más y recién ahí el render.

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { StickyOpts, PersonOpts, AnimalOpts, CarOpts } from "./stick";
 import type { CameoOpts } from "./cameo";
+import type { Portada } from "./portada";
 export type V3 = [number, number, number];
 export type Env = "day" | "dusk" | "night" | "space" | "underwater";
 export type SetName = "park" | "street" | "beach" | "space" | "house" | "elevator" | "hospital" | "store" | "classroom" | "desert" | "reef" | "farm" | "gym";
@@ -63,4 +64,6 @@ export type Story = {
   voz?: { w: string; t: number; d: number }[];
   /** invitado especial (cameo): la foto se precarga antes de renderizar. foto = ruta dentro de public/ */
   cameo?: { foto: string; nombre: string };
+  /** portada (miniatura) del short: ver engine/portada.tsx y BIBLIA/CALIDAD.md «Portada» */
+  portada?: Portada;
 };

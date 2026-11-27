@@ -37,6 +37,8 @@ echo [6/6] Cierre "suscribete y comenta"...
 ffmpeg -v error -y -i out/%V%_final.mp4 -i %OUTRO% -filter_complex "[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1[v][a]" -map "[v]" -map "[a]" -c:v libx264 -crf 18 -preset medium -c:a aac -b:a 192k out/%V%_con_cierre.mp4 || goto error
 if not exist "..\%CARPETA%" mkdir "..\%CARPETA%"
 copy /y "out\%V%_con_cierre.mp4" "..\%CARPETA%\%CARPETA%.mp4" >nul || goto error
+rem Limpieza: Remotion deja ~70 MB por render en %TEMP%
+for /d %%D in ("%TEMP%\remotion-webpack-bundle-*") do rd /s /q "%%D" 2>nul
 echo.
 echo LISTO: "%~dp0..\%CARPETA%\%CARPETA%.mp4"
 goto fin
@@ -52,7 +54,7 @@ exit /b 0
 
 :cierreh
 echo [*] Primero el cierre horizontal (se hace una sola vez)...
-if not exist publicoz_outro.wav ffmpeg -v error -y -i voz/outro/voz.mp3 -ar 48000 -ac 1 public/voz_outro.wav || exit /b 1
+if not exist public\voz_outro.wav ffmpeg -v error -y -i voz/outro/voz.mp3 -ar 48000 -ac 1 public/voz_outro.wav || exit /b 1
 call npx remotion render src/index.ts OutroH out/outro_h_mudo.mp4 --codec h264 --crf 18 --gl=angle --concurrency=3 --timeout=240000 || exit /b 1
 python -I audio/mezcla.py outro public/voz_outro.wav out/outro_h_mezcla.wav || exit /b 1
 ffmpeg -v error -y -i out/outro_h_mudo.mp4 -i out/outro_h_mezcla.wav -map 0:v:0 -map 1:a:0 -c:v copy -c:a aac -b:a 192k -shortest out/outro_h_sin_subs.mp4 || exit /b 1

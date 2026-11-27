@@ -54,3 +54,50 @@ export const bocaAt = (voz: Palabra[], f: number): number => {
   return 0;
 };
 export const blinkAt = (f: number, seed: number) => { const k = (f + Math.floor(hh(seed, 9) * 70)) % 71; return k < 4 ? [0.5, 1, 1, 0.5][k] : 0; };
+
+// ---------------- cara al ritmo de la voz ----------------
+/** quita acentos, signos y mayúsculas para comparar palabras ("¡PUM!" == "pum", "bastón" == "baston") */
+const norm = (w: string) => w.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9ñ ]/g, "").trim();
+/** cuadro en que empieza `palabra` en palabras.json (la 1.ª vez a partir del cuadro `desde`); acepta frases ("no vuelve").
+ *  Si no la encuentra regresa -1. */
+export const palabraEn = (voz: Palabra[], palabra: string, desde = 0): number => {
+  const ws = norm(palabra).split(/\s+/);
+  for (let i = 0; i < voz.length; i++) {
+    if (voz[i].t * FPS < desde - 0.5) continue;
+    if (ws.every((w, j) => voz[i + j] && norm(voz[i + j].w) === w)) return Math.round(voz[i].t * FPS);
+  }
+  return -1;
+};
+/** cuántos cuadros antes de la palabra cambia la cara (la cara se adelanta: así se ve que el personaje "lo piensa") */
+export const CARA_ANTES = 2;
+/** expresión que toca en el cuadro f: cada entrada es [palabra | cuadro, expr] o [palabra, expr, desde]. La cara cambia
+ *  CARA_ANTES (2) cuadros antes de que empiece la palabra y se queda hasta la siguiente entrada. Antes de la primera: `base`.
+ *  Ej.: caraEn(VOZ, f, [["furiosa", "furioso"], ["pum", "susto"], [1300, "llora"]], "shock") */
+export const caraEn = <E extends string>(voz: Palabra[], f: number, mapa: ([string | number, E] | [string, E, number])[], base: E): E => {
+  let best = -Infinity, e = base;
+  for (const m of mapa) {
+    const f0 = typeof m[0] === "number" ? m[0] : palabraEn(voz, m[0], m.length > 2 ? (m[2] as number) : 0);
+    if (f0 < 0) continue;
+    const ini = f0 - CARA_ANTES;
+    if (f >= ini && ini >= best) { best = ini; e = m[1]; }
+  }
+  return e;
+};
+
+// ---------------- saltito de cámara en los golpes ----------------
+/** salto corto y seco de la imagen en un golpe (además del `shake`): en los 4 cuadros desde f0 la cámara entera (posición
+ *  y mira) baja de golpe, rebota arriba y vuelve; amp en metros (0.10–0.25 según el golpe y lo cerca que esté la cámara). */
+const SALTO = [-1, 0.55, -0.25, 0.08];
+export const saltoAt = (f: number, golpes: (number | [number, number])[], amp = 0.14): number => {
+  let dy = 0;
+  for (const g of golpes) {
+    const [f0, a] = typeof g === "number" ? [g, amp] : g, k = Math.floor(f - f0);
+    if (k >= 0 && k < SALTO.length) dy += SALTO[k] * a;
+  }
+  return dy;
+};
+/** aplica el saltito a una cámara: mueve posición y mira juntas (la imagen salta sin girar) */
+export const conSalto = (c: Cam, f: number, golpes: (number | [number, number])[], amp = 0.14): Cam => {
+  const dy = saltoAt(f, golpes, amp);
+  return dy ? { ...c, pos: [c.pos[0], c.pos[1] + dy, c.pos[2]], look: [c.look[0], c.look[1] + dy, c.look[2]] } : c;
+};

@@ -3,6 +3,7 @@
 // para que se vean idénticos en todos los shorts. Si agregas uno nuevo, agrégalo aquí y en BIBLIA/PERSONAJES.md.
 import type { Card, V3 } from "./types";
 import type { Expr, Arm, PersonOpts, Look } from "./stick";
+import { CARAS_V3 } from "./stick";
 import { blinkAt } from "./timeline";
 
 /** Escalas estándar (alto relativo de la tarjeta). No las cambies entre videos. */
@@ -22,7 +23,7 @@ export const bufanda = (f: number) => Math.floor((((f / 30) * 1.3) % 1) * 8) / 8
 /** Sticky, el protagonista: cabeza blanca grande y bufanda azul. Siempre al frente y sin nada tapándolo. */
 export const sticky = (f: number, expr: Expr, arm: Arm, pos: V3, look: Look = [0, 0], walk?: number, musc?: number): Card => ({
   kind: "sticky",
-  o: { expr, arm, look, walk, blink: expr === "shock" || expr === "scream" ? 0 : blinkAt(f, 1), scarf: bufanda(f), musc },
+  o: { expr, arm, look, walk, blink: expr === "shock" || expr === "scream" || CARAS_V3.includes(expr) ? 0 : blinkAt(f, 1), scarf: bufanda(f), musc },
   x: pos[0], z: pos[2], y: pos[1] || undefined, s: ESCALA.sticky,
 });
 

@@ -137,3 +137,33 @@ export const FichaMusculo: React.FC = () => {
   }, []);
   return <AbsoluteFill><canvas ref={ref} width={6000} height={3280} style={{ width: "100%", height: "100%" }} /></AbsoluteFill>;
 };
+
+// Ficha de CARAS v3 (BIBLIA/fotos/caras_ficha.jpg): fila 1 Sticky con las 5 caras nuevas, fila 2 las mismas hablando
+// (talk 2, cuadro 17), fila 3 personas del elenco con las caras nuevas, fila 4 caras viejas (no cambian).
+// node scripts/fotos.mjs FichaCaras out/caras_ 0 0.3
+import { CARAS_V3 } from "../engine/stick";
+const VIEJAS: Expr[] = ["neutral", "smile", "happy", "shock", "scream"];
+const GENTE = [MAMA, PAPA, NINO, ABUELA, OBRERO];
+export const FichaCaras: React.FC = () => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => {
+    const c = ref.current!, g = c.getContext("2d")!;
+    g.fillStyle = "#cfeaff"; g.fillRect(0, 0, c.width, c.height);
+    const cell = (col: number, row: number, name: string, draw: (p: Pen) => void) => {
+      const cx = col * 600, cy = row * 1080;
+      g.save(); g.translate(cx, cy + 10); draw(new Pen(g)); g.restore();
+      g.fillStyle = "#241726"; g.font = "bold 52px Arial"; g.textAlign = "center"; g.fillText(name, cx + 300, cy + 1060);
+    };
+    CARAS_V3.forEach((e, i) => {
+      cell(i, 0, e, (p) => sticky(p, { expr: e, arm: e === "feliz" ? "cheer" : e === "susto" ? "cover" : e === "furioso" ? "flex" : e === "sorpresa" ? "up" : "down", scarf: i / 5, t: 9 }));
+      cell(i, 1, e + " + habla", (p) => sticky(p, { expr: e, arm: "down", scarf: i / 5, talk: 2, t: 17 }));
+      cell(i, 2, e, (p) => person(p, { ...GENTE[i], expr: e, arm: "down", t: 9 }));
+      cell(i, 3, VIEJAS[i] + " (vieja)", (p) => sticky(p, { expr: VIEJAS[i], arm: "down", scarf: i / 5 }));
+    });
+  }, []);
+  return (
+    <AbsoluteFill>
+      <canvas ref={ref} width={3000} height={4320} style={{ width: "100%", height: "100%" }} />
+    </AbsoluteFill>
+  );
+};

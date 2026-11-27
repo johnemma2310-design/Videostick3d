@@ -5,7 +5,13 @@ import { Pen, INK, shade, mix } from "./toon";
 
 type P2 = [number, number];
 const WHITE = "#ffffff", MOUTH = "#5a1e28";
-export type Expr = "neutral" | "smile" | "lick" | "shock" | "sad" | "scream" | "happy" | "worried" | "shiver" | "frozen" | "relief" | "sleep";
+export type Expr = "neutral" | "smile" | "lick" | "shock" | "sad" | "scream" | "happy" | "worried" | "shiver" | "frozen" | "relief" | "sleep"
+  /** caras exageradas v3 (nov 2026, ver BIBLIA/PERSONAJES.md «Caras v3»): se leen a escala de short */
+  | "furioso" | "llora" | "susto" | "sorpresa" | "feliz";
+/** expresiones v3 (con efecto: venita, lágrimas, gota de sudor, ojos enormes, mejillas) */
+export const CARAS_V3: readonly Expr[] = ["furioso", "llora", "susto", "sorpresa", "feliz"];
+/** caras v3 que se animan con el cuadro `t` (world.ts se lo pone solo a Sticky y a las personas) */
+export const caraAnimada = (e: Expr) => e === "furioso" || e === "llora" || e === "susto";
 export type Arm = "down" | "icecream" | "up" | "cheer" | "wave" | "phone" | "candle" | "flash" | "point" | "fly" | "hug" | "cover" | "flex" | "curl";
 export type Look = [number, number];
 
@@ -84,6 +90,8 @@ const held = (p: Pen, arm: Arm, h: P2, k: number) => {
 // ---------------- Sticky (the lead) ----------------
 export type StickyOpts = {
   expr: Expr; arm?: Arm; look?: Look; blink?: number; scarf?: number; walk?: number; ang?: number; run?: boolean; talk?: number;
+  /** cuadro actual: anima las lágrimas, la gota de sudor y la venita de las caras v3 (lo pone world.ts) */
+  t?: number;
   /** músculo 0 (normal) .. 10 (enorme): torso en V con pectorales y abdominales, brazos y piernas gruesos, la cabeza igual.
    *  Con musc > 0 la tarjeta es la ancha XBODY (1000 x 1000) para que quepan los brazos. */
   musc?: number;
@@ -123,8 +131,94 @@ const headV2 = (p: Pen, cx: number, cy: number, rx: number, ry: number, skin = W
 // torso en cápsula blanca con contorno grueso, brazos y piernas de palito, y su bufanda azul anudada al cuello.
 const SH_L: P2 = [234, 572], SH_R: P2 = [366, 572], SHADE = "#dfe3ea", BLUE = "#2f86d6", BLUE_D = "#1f5f9e";
 export const stickyHand = (o: StickyOpts): P2 => (o.arm === "up" ? [395 + 25 * Math.cos(o.ang ?? 0), 300 + 12 * Math.sin(o.ang ?? 0)] : rightArm(o.arm ?? "down", SH_R, 1, 0)[1]);
+// ---------------- caras v3 (nov 2026): furioso, llora, susto, sorpresa, feliz ----------------
+const TEAR = "#5fb8ff", VEIN = "#e8263a", BLUSH = "#ff9fb0";
+/** puntos de una curva cuadrática (trazos curvos que respetan p.rot) */
+const quad = (a: P2, c: P2, b: P2, n = 10): P2[] => Array.from({ length: n + 1 }, (_, i) => { const u = i / n, v = 1 - u; return [v * v * a[0] + 2 * u * v * c[0] + u * u * b[0], v * v * a[1] + 2 * u * v * c[1] + u * u * b[1]] as P2; });
+/** ceja en cuña: altura de la punta interior, media y exterior (relativas al ojo) y grosor */
+const brow = (p: Pen, ex: number, ey: number, sx: number, yi: number, ym: number, yo: number, th = 1) => {
+  const xi = ex - sx * 26, xm = ex, xo = ex + sx * 28;
+  p.poly([[xi, ey + yi - 9 * th], [xm, ey + ym - 8 * th], [xo, ey + yo - 5 * th], [xo, ey + yo + 4 * th], [xm, ey + ym + 7 * th], [xi, ey + yi + 10 * th]], INK, 5);
+};
+/** venita de enojo de anime: cuatro trazos curvos en cruz, rojos con borde; late con t */
+export const venita = (p: Pen, x: number, y: number, R: number, t = 0) => {
+  const k = R * (1 + 0.14 * Math.max(0, Math.sin(t * 0.9))), g = k * 0.3;
+  for (const [qx, qy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]] as const) {
+    const pts = quad([x + qx * g, y + qy * k], [x + qx * g * 1.1, y + qy * g * 1.1], [x + qx * k, y + qy * g]);
+    p.stroke(pts, 19); p.stroke(pts, 11, VEIN);
+  }
+};
+/** gota de sudor azul con brillo (punta arriba) */
+export const gotaSudor = (p: Pen, x: number, y: number, r: number) => {
+  const pts: P2[] = [[x, y - r * 2.1]];
+  for (let a = -30; a <= 210; a += 15) pts.push([x + r * Math.cos((a * Math.PI) / 180), y + r * Math.sin((a * Math.PI) / 180)]);
+  p.poly(pts, TEAR, 6); p.ell(x - r * 0.35, y - r * 0.1, r * 0.22, r * 0.38, WHITE, 0);
+};
+/** caras exageradas v3 (mismo dibujo para Sticky y las personas; t = cuadro para animar) */
+const caraV3 = (p: Pen, cx: number, cy: number, expr: Expr, look: Look, talk: number, t: number) => {
+  const lx = look[0] * 9, ly = look[1] * 9, mx = cx + 4, my = cy + 64, l = Math.min(3, talk);
+  for (const sx of [-1, 1]) {
+    const ex = cx + sx * 48, ey = cy - 14;
+    switch (expr) {
+      case "furioso": // ojos entrecerrados bajo una ceja en V muy marcada
+        p.ell(ex + lx, ey + ly + 4, 13, 15, INK, 0); p.ell(ex + lx - 4, ey + ly - 1, 4, 4, WHITE, 0);
+        brow(p, ex, ey, sx, -12, -30, -58, 1.5); break;
+      case "llora": // ojos apretados > < y cejas tristes
+        p.stroke([[ex - sx * 16, ey - 14], [ex + sx * 12, ey], [ex - sx * 16, ey + 12]], 10);
+        brow(p, ex, ey, sx, -66, -56, -40); break;
+      case "susto": // ojos chiquitos (puntito negro en ojo blanco) y cejas de miedo
+        p.ell(ex + lx * 0.5, ey + ly * 0.5, 17, 20, WHITE, 6); p.dot(ex + lx * 0.7, ey + ly * 0.7, 6);
+        brow(p, ex, ey, sx, -82, -68, -52); break;
+      case "sorpresa": // ojos ENORMES y cejas muy arriba
+        p.ell(ex + lx * 0.4, ey - 6 + ly * 0.4, 33, 44, WHITE, 7); p.ell(ex + lx, ey - 4 + ly, 16, 21, INK, 0); p.ell(ex + lx - 6, ey - 12 + ly, 6, 6, WHITE, 0);
+        brow(p, ex, ey, sx, -94, -104, -90); break;
+      case "feliz": // ojos cerrados en arco ^ ^ y mejillas rosas
+        p.arc(ex, ey + 6, 25, 20, 195, 345, 11);
+        p.ell(ex + sx * 22, ey + 44, 22, 12, BLUSH, 0);
+        brow(p, ex, ey, sx, -58, -68, -58); break;
+    }
+  }
+  switch (expr) {
+    case "furioso": { // dientes apretados (si habla, se separan) y venita en la frente
+      const w = 44, h = 15 + 7 * l, y0 = my + 4;
+      p.poly([[mx - w, y0 - h + 4], [mx + w, y0 - h + 4], [mx + w - 4, y0 + h], [mx - w + 4, y0 + h]], WHITE, 8);
+      p.stroke([[mx - w + 4, y0 + 2], [mx + w - 4, y0 + 2]], 4);
+      for (let i = -2; i <= 2; i++) p.stroke([[mx + i * 16, y0 - h + 8], [mx + i * 16, y0 + h - 3]], 4);
+      venita(p, cx + 74, cy - 112, 30, t); break;
+    }
+    case "llora": { // boca de puchero que tiembla y dos chorritos de lágrimas con gotas que bajan
+      const pts: P2[] = [], R = 34 + 4 * l, H = 26 + 6 * l;
+      for (let a = 180; a <= 360; a += 12) { const j = Math.sin(a * 0.31 + t * 1.7) * 3; pts.push([mx + R * Math.cos((a * Math.PI) / 180) + j, my + 18 + H * Math.sin((a * Math.PI) / 180) + j]); }
+      for (let i = 1; i < 6; i++) pts.push([mx + R - (i * 2 * R) / 6, my + 18 + (i % 2 ? 4 : -3) * Math.sin(t * 1.3 + i)]);
+      p.poly(pts, MOUTH, 8);
+      for (const sx of [-1, 1]) {
+        const x0 = cx + sx * 56, y0 = cy + 2, len = 150, str: P2[] = [];
+        for (let i = 0; i <= 10; i++) { const u = i / 10; str.push([x0 + sx * (u * 18) + Math.sin(u * 7 + t * 0.7) * 4, y0 + u * len]); }
+        p.stroke(str, 25); p.stroke(str, 15, TEAR);
+        // una gota que corre por el chorro y otra que se suelta abajo y cae
+        const ph = ((t / 30) * 1.8 + (sx > 0 ? 0.5 : 0)) % 1, yy = y0 + 20 + ph * (len - 20);
+        p.ell(x0 + sx * ph * 18, yy, 13, 15, TEAR, 0); p.ell(x0 + sx * ph * 18 - 3, yy - 4, 3.5, 4.5, WHITE, 0);
+        const fall = (ph + 0.5) % 1, fy = y0 + len + 14 + fall * fall * 70;
+        p.ell(x0 + sx * 20, fy, 10, 13, TEAR, 5); p.ell(x0 + sx * 20 - 3, fy - 4, 3, 4, WHITE, 0);
+      }
+      break;
+    }
+    case "susto": { // mueca de dientes y gotas de sudor en las sienes que resbalan
+      const pts: P2[] = []; for (let i = 0; i <= 8; i++) pts.push([mx - 34 + i * 8.5, my + 2 + (i % 2 ? 6 : -6)]);
+      p.poly([[mx - 38, my - 12 - 3 * l], [mx + 38, my - 12 - 3 * l], [mx + 38, my + 14 + 3 * l], [mx - 38, my + 14 + 3 * l]], WHITE, 7); p.stroke(pts, 5);
+      const sl = ((t / 30) * 0.8) % 1;
+      gotaSudor(p, cx + 110, cy - 76 + sl * 30, 22);
+      gotaSudor(p, cx - 116, cy - 40 + ((sl + 0.5) % 1) * 24, 10); break;
+    }
+    case "sorpresa": // boca en O grande
+      p.ell(mx, my + 10, 24 + 3 * l, 32 + 4 * l, MOUTH, 8); p.ell(mx, my + 28 + 3 * l, 13, 7, "#e86e78", 0); break;
+    case "feliz": // sonrisa enorme abierta con lengua
+      p.ell(mx, my - 16, 52, 46 + 4 * l, MOUTH, 8, 0, 180); p.ell(mx + 6, my + 14 + 3 * l, 22, 11, "#e86e78", 0); break;
+  }
+};
 /** cara expresiva de Sticky: cejas gruesas, ojitos negros con brillo, boca grande */
-const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0], blink = 0, talk = 0) => {
+const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0], blink = 0, talk = 0, t = 0) => {
+  if (CARAS_V3.includes(expr)) return caraV3(p, cx, cy, expr, look, talk, t);
   const shock = expr === "shock" || expr === "scream";
   const closed = expr === "happy" || expr === "relief" || expr === "sleep" || (expr === "smile" && blink > 0.5);
   const lx = look[0] * 9, ly = look[1] * 9;
@@ -175,8 +269,8 @@ const browFace = (p: Pen, cx: number, cy: number, expr: Expr, look: Look = [0, 0
   }
 };
 /** cara v2 a cualquier tamaño (k = 1 es la cabeza de Sticky, radio 150); `extra` dibuja antes (p. ej. la barba) */
-const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?: Look, blink = 0, extra?: () => void, talk = 0) => {
-  p.g.save(); p.g.translate(cx, cy); p.g.scale(k, k); if (extra) extra(); browFace(p, 0, 0, expr, look, blink, talk); p.g.restore();
+const browFaceK = (p: Pen, cx: number, cy: number, k: number, expr: Expr, look?: Look, blink = 0, extra?: () => void, talk = 0, t = 0) => {
+  p.g.save(); p.g.translate(cx, cy); p.g.scale(k, k); if (extra) extra(); browFace(p, 0, 0, expr, look, blink, talk, t); p.g.restore();
 };
 // ---------------- movimiento v2: piernas con rodilla y brazos con codo ----------------
 /** cuánto sube el cuerpo en esta fase del paso (más alto cuando una pierna pasa por debajo) */
@@ -236,7 +330,7 @@ export const sticky = (p: Pen, o: StickyOpts) => {
   p.stroke([SH_R, re, rh], lw);
   // cabeza ovalada blanca con sombra gris (lado derecho y abajo)
   headV2(p, 300, 292, 150, 162);
-  browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0, o.talk ?? 0);
+  browFace(p, 292, 300, o.expr, o.look, o.blink ?? 0, o.talk ?? 0, o.t ?? 0);
   // bufanda: vuelta al cuello + nudo + punta corta al frente
   celPaint(p, ellPtsV(300, 490, 78, 30), (lit) => { p.g.fillStyle = lit ? BLUE : BLUE_D; p.g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
   p.arc(300, 478, 66, 20, 20, 160, 5, BLUE_D);
@@ -338,7 +432,7 @@ const stickyMusc = (p: Pen, o: StickyOpts) => {
   muscArm(p, SR, re, rh, m, cx);
   // cabeza del mismo tamaño (se ve chiquita sobre tanto músculo)
   headV2(p, cx, 292 - lift, 150, 162);
-  browFace(p, 292, 300 - lift, o.expr, o.look, o.blink ?? 0, o.talk ?? 0);
+  browFace(p, 292, 300 - lift, o.expr, o.look, o.blink ?? 0, o.talk ?? 0, o.t ?? 0);
   // bufanda estirada alrededor del cuello ancho
   const by = yT - 2, brx = 78 + 46 * m;
   celPaint(p, ellPtsV(cx, by, brx, 30 + 4 * m), (lit) => { g.fillStyle = lit ? BLUE : BLUE_D; g.fillRect(-2000, -2000, 6000, 6000); }, 9, 0.1);
@@ -363,6 +457,8 @@ export type PersonOpts = {
   ropa?: Ropa; shirt?: string; pants?: string; shoes?: string; trim?: string;
   /** correr en vez de caminar (usa la misma fase `walk`); talk = boca abierta 0..3 */
   run?: boolean; talk?: number;
+  /** cuadro actual para las caras v3 animadas (lo pone world.ts) */
+  t?: number;
 };
 const hatDraw = (p: Pen, o: PersonOpts, cx: number, cy: number, R: number) => {
   const c = o.hatCol ?? "#d84a3a", top = cy - R;
@@ -442,7 +538,7 @@ export const person = (p: Pen, o: PersonOpts) => {
   if (EARS.includes(o.hat ?? "none")) for (const sx of [-1, 1]) { p.ell(300 + sx * (R - 4), HY + 14, 20, 28, sx > 0 ? skinSh : skin, 9); p.arc(300 + sx * (R - 2), HY + 14, 9, 14, sx > 0 ? -60 : 120, sx > 0 ? 60 : 240, 5); }
   headV2(p, 300, HY, R, RY, skin);
   const k = R / 150;
-  browFaceK(p, 296, HY + 6, k, o.expr, o.look, o.blink ?? 0, () => { if (o.beard) { p.ell(4, 96, 96, 40, o.beard, 8, 0, 180); p.ell(4, 64, 40, 22, WHITE, 0); } }, o.talk ?? 0);
+  browFaceK(p, 296, HY + 6, k, o.expr, o.look, o.blink ?? 0, () => { if (o.beard) { p.ell(4, 96, 96, 40, o.beard, 8, 0, 180); p.ell(4, 64, 40, 22, WHITE, 0); } }, o.talk ?? 0, o.t ?? 0);
   if (o.glasses) { for (const sx of [-1, 1]) p.ell(296 + sx * 48 * k, HY - 8 * k, 34 * k, 30 * k, null, 7); p.stroke([[296 - 14 * k, HY - 10 * k], [296 + 14 * k, HY - 10 * k]], 6); }
   if (o.stache) {
     const my = HY + 46 * k, mx = 300;
