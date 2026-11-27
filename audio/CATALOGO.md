@@ -5,9 +5,9 @@ La **copia maestra** está en `C:\Users\cit\Audio-Compartido\`. Cada proyecto ti
 
 | Proyecto | Repo de GitHub | Dónde está el audio dentro del proyecto |
 |---|---|---|
-| stick3DD (videos largos 4D) | `Videos4d` | `assets/musica/` y `assets/sfx/` |
-| STICK 3D (shorts 3D) | `Videostick3d` | `audio/musica/` y `audio/sfx/` |
-| animacion Stick (shorts) | `animacion-stick` | `assets/audio/musica/` y `assets/audio/sfx/` |
+| stick3DD (videos largos 4D) | `Videos4d` | `assets/musica/`, `assets/sfx/` y `assets/sfx_drive/` |
+| STICK 3D (shorts 3D) | `Videostick3d` | `audio/musica/`, `audio/sfx/` y `audio/sfx_drive/` |
+| animacion Stick (shorts) | `animacion-stick` | `assets/audio/musica/`, `assets/audio/sfx/` y `assets/audio/sfx_drive/` |
 
 ## Reglas
 1. **Antes de buscar o generar un sonido, mira esta lista.** Si ya hay uno que sirve, úsalo.
@@ -65,3 +65,56 @@ La **copia maestra** está en `C:\Users\cit\Audio-Compartido\`. Cada proyecto ti
 | triste.wav | trombón triste "wah wah waaah" | `tools/make_sfx.py` | propia, libre |
 | viento.wav | viento, ambiente exterior | `tools/make_sfx.py` | propia, libre |
 | whoosh.wav | movimiento rápido, transición | `tools/make_sfx.py` | propia, libre |
+
+## Efectos de Drive (`sfx_drive/`)
+Descargados el 27 nov 2026 de la carpeta compartida de Google Drive **"sound effects (copywrite free part 2)"**
+(https://drive.google.com/drive/folders/1HCqd9TRGvktSj5T6Kd2V4DzzZA05sVq1). No son nuestros y la carpeta no dice de dónde
+salieron: el "copyright free" del nombre **no está verificado**. Muchos son memes sacados de series, juegos o películas.
+
+**Riesgo** (columna Licencia):
+- 🟢 **bajo**: sonido genérico (golpe, pop, whoosh…). Se puede usar.
+- 🟡 **medio**: meme o sonido viral conocido. Suele pasar en Shorts, pero puede saltar Content ID. Úsalo poco y en momentos cortos.
+- 🔴 **alto**: sale de una marca, serie, película o juego con copyright. **No usar** en videos monetizados.
+
+Dentro de cada proyecto están en `<carpeta de audio>/sfx_drive/`. Hay mp3, m4a y wav: si el motor de un proyecto solo lee `.wav`, conviértelo con
+`ffmpeg -i archivo.mp3 archivo.wav` y guarda la copia en la misma carpeta.
+
+| Archivo | Para qué | Origen | Licencia |
+|---|---|---|---|
+| bambu_golpe.mp3 | golpe de bambú, golpe cómico | Drive: "Bamboo Hit" | 🟢 bajo, sin verificar |
+| bonk_anime.mp3 | "bonk" de anime/caricatura, golpe en la cabeza | Drive: "Bamboo Hit (AnimeCartoon Bonk)" | 🟢 bajo, sin verificar |
+| camara_foto.wav | obturador de cámara, foto, "capturado" | Drive: "-camera-shutter" | 🟢 bajo, sin verificar |
+| comer_caricatura.mp3 | comer, masticar, cómico | Drive: "Cartoon Eating… Non Copyrighted" | 🟢 bajo (dice "non copyrighted") |
+| corcho_botella.mp3 | corcho que salta, celebración, "pop" | Drive: "bottle cork" | 🟢 bajo, sin verificar |
+| flashback.wav | entrar a un recuerdo o flashback | Drive: "FLASHBACK" | 🟢 bajo, sin verificar |
+| glitch.wav | fallo, error, interferencia digital | Drive: "Glitch" | 🟢 bajo, sin verificar |
+| pato_juguete.mp3 | pato de goma, cómico | Drive: "TOY DUCK" | 🟢 bajo, sin verificar |
+| pop_drive.mp3 | pop, aparición | Drive: "pop" | 🟢 bajo, sin verificar |
+| punetazo.mp3 | puñetazo, golpe | Drive: "punch" | 🟢 bajo, sin verificar |
+| reloj_tictac.mp3 | reloj, tiempo corriendo, espera | Drive: "Clock Ticking" | 🟢 bajo, sin verificar |
+| revelacion.mp3 | revelación, "¡tadá!", dato sorpresa | Drive: "Reveal Sound Effect" | 🟢 bajo, sin verificar |
+| silbato_juguete.wav | silbato de juguete, cómico | Drive: "cartoon-toy-whistle" | 🟢 bajo, sin verificar |
+| transicion_caricatura.mp3 | transición rápida de caricatura | Drive: "CARTOON TRANSITION" | 🟢 bajo, sin verificar |
+| whoosh_drive.mp3 | whoosh, movimiento rápido | Drive: "whoosh sound effect" | 🟢 bajo, sin verificar |
+| angel.mp3 | coro de ángel, momento "divino" o perfecto | Drive: "Angel - Sound Effect" | 🟡 medio (meme) |
+| augh_grito.mp3 | grito "AUGHHH", desesperación cómica | Drive: "AUGGHH AHHHHH" | 🟡 medio (meme) |
+| awww.mp3 | "awww" de público, ternura | Drive: "awww" | 🟡 medio (meme) |
+| bruh.mp3 | "bruh", algo absurdo o tonto | Drive: "Bruh Sound Effect" | 🟡 medio (meme) |
+| confundido_reverb.m4a | confusión con eco | Drive: "Confused Reverb" | 🟡 medio (meme) |
+| core.mp3 | (sin identificar; escúchalo antes de usarlo) | Drive: "Core" | 🟡 medio, sin identificar |
+| decepcion.mp3 | decepción, algo que sale mal | Drive: "Disappointed" | 🟡 medio (meme) |
+| faaah.mp3 | "faaah", fallo o susto cómico | Drive: "faahhhhh" | 🟡 medio (meme) |
+| nope.mp3 | "nope", negarse, huir | Drive: "Nope sound effect" | 🟡 medio (meme) |
+| omg_meme.mp3 | "OMG", sorpresa exagerada | Drive: "OMG meme" | 🟡 medio (meme) |
+| pedo.mp3 | pedo, humor infantil | Drive: "Fart - Sound Effect" | 🟡 medio, sin verificar |
+| rizz.mp3 | "rizz", ligar, momento "cool" | Drive: "Rizz Sound Effect" | 🟡 medio (meme) |
+| silencio_incomodo.mp3 | silencio incómodo (grillos o pausa) | Drive: "Awkward Pause" | 🟡 medio (meme) |
+| silencio_incomodo2.mp3 | silencio incómodo, variante | Drive: "Awkward Pause 02" | 🟡 medio (meme) |
+| what_bottom_text.m4a | "What?" de meme, incredulidad | Drive: "'What' Bottom Text" | 🟡 medio (meme) |
+| yeet.mp3 | "YEET", lanzar algo con fuerza | Drive: "YEET - Sound Effect HD" | 🟡 medio (meme) |
+| alerta_twitch.m4a | notificación tipo alerta de stream | Drive: "Twitch Alert" | 🔴 alto (sonido de marca: Twitch) |
+| among_us.mp3 | sonido de Among Us, "impostor", traición | Drive: "Among us sound effect" | 🔴 alto (videojuego Among Us) |
+| doraemon_notificacion.mp3 | notificación de Doraemon | Drive: "Doraemon Notification Sound" | 🔴 alto (serie Doraemon) |
+| illuminati.mp3 | "Illuminati confirmed", conspiración | Drive: "Illuminati Confirmed" | 🔴 alto (lleva música con copyright) |
+| spiderman3_meme.mp3 | meme de Spider-Man 3 | Drive: "Spider-Man 3 Meme Sound" | 🔴 alto (película de Sony) |
+| taco_bell.m4a | "bong" de Taco Bell, golpe o choque | Drive: "taco bell" | 🔴 alto (sonido de marca: Taco Bell) |

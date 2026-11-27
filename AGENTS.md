@@ -51,6 +51,7 @@ Recomendado: deja la sesión principal en **Sonnet** como orquestador y que el `
 Los 3 proyectos de videos de este PC (stick3DD, STICK 3D y animacion Stick) comparten la misma biblioteca de audio.
 - **En este proyecto está en** `audio/musica/ y audio/sfx/ (catálogo: audio/CATALOGO.md). Para usarlo en un short de Remotion, copia el archivo a su public/`. La lista con el ambiente, el origen y la licencia de cada archivo está en el `CATALOGO` de esa carpeta.
 - **Copia maestra:** `C:\Users\cit\Audio-Compartido\` (ahí está también el catálogo original).
+- **También hay `sfx_drive/`**: 37 efectos bajados de una carpeta de Google Drive (memes, golpes, transiciones). En el catálogo cada uno tiene su nivel de riesgo de copyright. Los 🔴 **no se usan** en videos monetizados, y los 🟡 solo de vez en cuando y en momentos cortos.
 - **Antes de buscar o generar un sonido, mira el catálogo.** Si ya hay uno que sirve, úsalo.
 - **Si agregas uno nuevo:** guárdalo en la carpeta de audio de este proyecto (minúsculas, sin espacios ni acentos) y ejecuta
   `powershell -ExecutionPolicy Bypass -File C:\Users\cit\Audio-Compartido\sincronizar_audio.ps1`. El script lo copia a los otros proyectos sin sobrescribir nada.
